@@ -2,7 +2,6 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-configuration-processor")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
@@ -17,4 +16,3 @@ tasks.getByName<BootJar>("bootJar") {
 tasks.getByName<Jar>("jar") {
     enabled = true
 }
-

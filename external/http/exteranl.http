@@ -1,0 +1,5 @@
+@host = http://localhost:8001
+
+###
+GET {{host}}/v1/comes
+Content-Type: application/json

@@ -1,0 +1,21 @@
+### 변수 (IntelliJ HTTP Client / VS Code REST Client 공통)
+@host = http://localhost:8000
+
+###
+# 선택 필드 포함 예시
+POST {{host}}/v1/comes
+Content-Type: application/json
+
+{
+  "name": "한정 수량 판매",
+  "capacity": 50,
+  "startAt": "2026-05-01T12:00:00",
+  "endAt": "2026-05-01T12:30:00",
+  "displayAt": "2026-04-15T00:00:00",
+  "organizer": "브랜드팀",
+  "eligibilityValue": "성인 회원",
+  "duplicable": false,
+  "joinMethod": "IMMEDIATELY",
+  "waitType": "WAITLIST",
+  "waitCapacity": 100
+}
