@@ -1,6 +1,7 @@
 package org.example.impati.catching
 
 import jakarta.persistence.*
+import org.example.impati.catching.first_come.*
 import java.time.LocalDateTime
 
 @Entity
@@ -51,7 +52,7 @@ class FirstComeEntity(
     var organizer: String
 
 ) {
-    
+
     companion object {
         fun from(firstCome: FirstCome): FirstComeEntity {
             return FirstComeEntity(

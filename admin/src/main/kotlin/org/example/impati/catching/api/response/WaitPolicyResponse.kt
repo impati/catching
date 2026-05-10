@@ -1,6 +1,6 @@
 package org.example.impati.catching.api.response
 
-import org.example.impati.catching.WaitType
+import org.example.impati.catching.first_come.WaitType
 
 data class WaitPolicyResponse(
     val waitType: WaitType,

@@ -3,3 +3,32 @@
 ###
 GET {{host}}/v1/comes
 Content-Type: application/json
+
+###
+GET {{host}}/v1/auth/gateway
+Content-Type: application/json
+
+###
+GET {{host}}/v1/auth/gateway?mode=signup
+Content-Type: application/json
+
+###
+POST {{host}}/v1/auth/code
+Content-Type: application/json
+
+{
+  "code": "callback으로 받은 code",
+  "clientId": "catch"
+}
+
+###
+POST {{host}}/v1/auth/token/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "refresh-token"
+}
+
+###
+GET {{host}}/v1/auth/me
+Authorization: Bearer access-token

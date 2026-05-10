@@ -1,0 +1,6 @@
+catching:
+  auth:
+    member-api-base-url: http://localhost:8081
+    member-web-base-url: http://localhost:3000/index.html
+    client-id: catch
+    web-redirect-url: http://localhost:5173/

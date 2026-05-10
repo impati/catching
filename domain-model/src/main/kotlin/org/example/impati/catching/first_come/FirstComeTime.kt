@@ -1,4 +1,4 @@
-package org.example.impati.catching
+package org.example.impati.catching.first_come
 
 import java.time.LocalDateTime
 

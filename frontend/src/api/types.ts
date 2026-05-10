@@ -33,3 +33,20 @@ export interface FirstComeResponse {
   waitPolicy: WaitPolicyResponse
   organizer: string
 }
+
+export type AuthMode = 'login' | 'signup'
+
+export interface AuthUrlResponse {
+  authUrl: string
+}
+
+export interface TokenResponse {
+  accessToken: string
+  expiresIn: number
+  refreshToken: string
+}
+
+export interface MemberResponse {
+  memberId: string
+  nickName: string
+}

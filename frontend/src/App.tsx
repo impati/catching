@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  clearTokens,
+  exchangeCode,
+  fetchMe,
+  fetchAuthUrl,
+  readStoredTokens,
+  storeTokens,
+} from './api/auth'
 import { fetchComes } from './api/comes'
-import type { FirstComeResponse } from './api/types'
+import type { AuthMode, FirstComeResponse, MemberResponse, TokenResponse } from './api/types'
 import './App.css'
+
+const callbackTokenRequests = new Map<string, Promise<TokenResponse>>()
 
 function formatDt(iso: string) {
   try {
@@ -78,6 +88,10 @@ export default function App() {
   const [items, setItems] = useState<FirstComeResponse[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState<AuthMode | 'callback' | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [tokens, setTokens] = useState<TokenResponse | null>(() => readStoredTokens())
+  const [member, setMember] = useState<MemberResponse | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -96,15 +110,147 @@ export default function App() {
     void load()
   }, [load])
 
+  const startAuth = useCallback(async (mode: AuthMode) => {
+    setAuthLoading(mode)
+    setAuthError(null)
+
+    try {
+      window.location.href = await fetchAuthUrl(mode)
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : '인증 페이지를 열 수 없습니다.')
+      setAuthLoading(null)
+    }
+  }, [])
+
+  const logout = useCallback(() => {
+    clearTokens()
+    setTokens(null)
+    setMember(null)
+    setAuthError(null)
+  }, [])
+
+  const loadMe = useCallback(async (accessToken: string) => {
+    try {
+      setMember(await fetchMe(accessToken))
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : '회원 정보를 불러오지 못했습니다.')
+      setMember(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!tokens) {
+      setMember(null)
+      return
+    }
+
+    void loadMe(tokens.accessToken)
+  }, [loadMe, tokens])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    const clientId = params.get('clientId')
+
+    if (!code || !clientId) {
+      return
+    }
+
+    let ignore = false
+
+    async function completeAuth() {
+      setAuthLoading('callback')
+      setAuthError(null)
+
+      try {
+        const requestKey = `${clientId}:${code}`
+        let tokenRequest = callbackTokenRequests.get(requestKey)
+        if (!tokenRequest) {
+          tokenRequest = exchangeCode(code as string, clientId as string)
+          callbackTokenRequests.set(requestKey, tokenRequest)
+        }
+
+        const nextTokens = await tokenRequest
+        if (ignore) {
+          return
+        }
+        storeTokens(nextTokens)
+        setTokens(nextTokens)
+        await loadMe(nextTokens.accessToken)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      } catch (e) {
+        if (!ignore) {
+          setAuthError(e instanceof Error ? e.message : '로그인 처리에 실패했습니다.')
+        }
+      } finally {
+        if (!ignore) {
+          setAuthLoading(null)
+        }
+      }
+    }
+
+    void completeAuth()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   return (
     <div className="home">
       <header className="home__header">
-        <h1 className="home__title">선착순</h1>
-        <p className="home__lead">external · GET /v1/comes</p>
-        <button type="button" className="home__reload" onClick={() => void load()} disabled={loading}>
-          {loading ? '불러오는 중…' : '다시 불러오기'}
-        </button>
+        <div>
+          <h1 className="home__title">선착순</h1>
+          <p className="home__lead">external · 회원 시스템 연동</p>
+        </div>
+        <div className="home__actions">
+          {tokens ? (
+            <>
+              <span className="home__auth-state">
+                {member ? `${member.nickName} · ` : '로그인됨 · '}
+                {tokens.expiresIn}초
+              </span>
+              <button type="button" className="home__button" onClick={logout}>
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="home__button home__button--primary"
+                onClick={() => void startAuth('login')}
+                disabled={authLoading !== null}
+              >
+                {authLoading === 'login' ? '이동 중…' : '로그인'}
+              </button>
+              <button
+                type="button"
+                className="home__button"
+                onClick={() => void startAuth('signup')}
+                disabled={authLoading !== null}
+              >
+                {authLoading === 'signup' ? '이동 중…' : '회원가입'}
+              </button>
+            </>
+          )}
+          <button type="button" className="home__button" onClick={() => void load()} disabled={loading}>
+            {loading ? '불러오는 중…' : '새로고침'}
+          </button>
+        </div>
       </header>
+
+      {authLoading === 'callback' && (
+        <div className="home__banner" role="status">
+          로그인 결과를 처리하는 중입니다.
+        </div>
+      )}
+
+      {authError && (
+        <div className="home__banner home__banner--error" role="alert">
+          {authError}
+        </div>
+      )}
 
       {error && (
         <div className="home__banner home__banner--error" role="alert">

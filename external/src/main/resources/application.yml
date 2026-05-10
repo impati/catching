@@ -4,4 +4,4 @@ spring:
   profiles:
     include:
       - rds
-
+      - member

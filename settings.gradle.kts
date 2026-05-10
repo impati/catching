@@ -7,6 +7,9 @@ include("domain-model")
 // data
 include("data-rds")
 
+// client
+include("client-member")
+
 // application
 include("admin")
 include("external")

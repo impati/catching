@@ -1,7 +1,7 @@
 package org.example.impati.catching.api.response
 
-import org.example.impati.catching.FirstCome
-import org.example.impati.catching.FirstComeStatus
+import org.example.impati.catching.first_come.FirstCome
+import org.example.impati.catching.first_come.FirstComeStatus
 
 data class FirstComeResponse(
     val id: String,

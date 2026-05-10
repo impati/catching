@@ -7,6 +7,7 @@ dependencies {
 
     implementation(project(":domain"))
     runtimeOnly(project(":data-rds"))
+    runtimeOnly(project(":client-member"))
 }
 
 tasks.getByName<BootJar>("bootJar") {

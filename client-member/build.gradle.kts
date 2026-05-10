@@ -1,0 +1,4 @@
+dependencies {
+    implementation(project(":domain-model"))
+    implementation("org.springframework:spring-web")
+}

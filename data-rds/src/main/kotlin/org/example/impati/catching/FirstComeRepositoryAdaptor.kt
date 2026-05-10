@@ -1,5 +1,7 @@
 package org.example.impati.catching
 
+import org.example.impati.catching.first_come.FirstCome
+import org.example.impati.catching.first_come.FirstComeRepository
 import org.springframework.stereotype.Component
 import java.util.*
 
