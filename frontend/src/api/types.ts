@@ -50,3 +50,10 @@ export interface MemberResponse {
   memberId: string
   nickName: string
 }
+
+export type ErrorCode = 'EXPIRED_TOKEN'
+
+export interface ErrorResponse {
+  message: string
+  code: ErrorCode
+}

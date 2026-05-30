@@ -1,10 +1,11 @@
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 dependencies {
+
     api(project(":domain-model"))
-    testImplementation(project(":data-rds"))
-    testImplementation(project(":test-support"))
+    runtimeOnly("com.h2database:h2")
 }
+
 
 tasks.getByName<BootJar>("bootJar") {
     enabled = false

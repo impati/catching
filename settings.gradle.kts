@@ -13,3 +13,6 @@ include("client-member")
 // application
 include("admin")
 include("external")
+
+// test-support
+include("test-support")

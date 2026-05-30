@@ -3,6 +3,7 @@ package org.example.impati.catching
 import org.example.impati.catching.first_come.FirstCome
 import org.example.impati.catching.first_come.FirstComeRepository
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 import java.util.*
 
 @Component
@@ -20,5 +21,9 @@ class FirstComeRepositoryAdaptor(
 
     override fun findAll(): List<FirstCome> {
         return firstComeEntityRepository.findAll().map { it.toDomain() }
+    }
+
+    override fun findByDisplayable(now: LocalDateTime): List<FirstCome> {
+        return firstComeEntityRepository.findByDisplayable(now).map { it.toDomain() }
     }
 }

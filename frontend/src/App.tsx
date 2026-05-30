@@ -4,7 +4,9 @@ import {
   exchangeCode,
   fetchMe,
   fetchAuthUrl,
+  isExpiredTokenError,
   readStoredTokens,
+  refreshToken,
   storeTokens,
 } from './api/auth'
 import { fetchComes } from './api/comes'
@@ -129,10 +131,29 @@ export default function App() {
     setAuthError(null)
   }, [])
 
-  const loadMe = useCallback(async (accessToken: string) => {
+  const loadMe = useCallback(async (currentTokens: TokenResponse) => {
     try {
-      setMember(await fetchMe(accessToken))
+      setMember(await fetchMe(currentTokens.accessToken))
     } catch (e) {
+      if (isExpiredTokenError(e)) {
+        try {
+          const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+          storeTokens(refreshedTokens)
+          setTokens(refreshedTokens)
+          setMember(await fetchMe(refreshedTokens.accessToken))
+          setAuthError(null)
+          return
+        } catch (refreshError) {
+          clearTokens()
+          setTokens(null)
+          setAuthError(
+            refreshError instanceof Error ? refreshError.message : '토큰 갱신에 실패했습니다.',
+          )
+          setMember(null)
+          return
+        }
+      }
+
       setAuthError(e instanceof Error ? e.message : '회원 정보를 불러오지 못했습니다.')
       setMember(null)
     }
@@ -144,7 +165,7 @@ export default function App() {
       return
     }
 
-    void loadMe(tokens.accessToken)
+    void loadMe(tokens)
   }, [loadMe, tokens])
 
   useEffect(() => {
@@ -176,7 +197,7 @@ export default function App() {
         }
         storeTokens(nextTokens)
         setTokens(nextTokens)
-        await loadMe(nextTokens.accessToken)
+        await loadMe(nextTokens)
         window.history.replaceState({}, document.title, window.location.pathname)
       } catch (e) {
         if (!ignore) {

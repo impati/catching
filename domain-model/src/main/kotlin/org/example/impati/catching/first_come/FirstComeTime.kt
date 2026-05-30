@@ -7,4 +7,9 @@ data class FirstComeTime(
     val endAt: LocalDateTime,
     val displayAt: LocalDateTime
 ) {
+
+    init {
+        require(startAt.isBefore(endAt)) { "startAt must be before endAt" }
+        require(displayAt.isBefore(endAt)) { "displayAt must be before endAt" }
+    }
 }

@@ -26,10 +26,7 @@ data class CreateFirstComeRequest(
     @field:NotNull
     val displayAt: LocalDateTime,
 
-    @field:NotBlank
-    val organizer: String,
-
-    val eligibilityValue: String? = null,
+    val eligibility: String? = null,
 
     val duplicable: Boolean = true,
 
@@ -38,6 +35,9 @@ data class CreateFirstComeRequest(
     val waitType: WaitType = WaitType.WAITLIST,
 
     val waitCapacity: Int? = null,
+
+    @field:NotBlank
+    val organizer: String
 ) {
 
     fun toInputVo(): FirstComeInputVo {
@@ -50,7 +50,7 @@ data class CreateFirstComeRequest(
             capacity = FirstComeCapacity(capacity),
             time = FirstComeTime(startAt = startAt, endAt = endAt, displayAt = displayAt),
             eligibility = Eligibility(
-                value = eligibilityValue ?: "",
+                value = eligibility ?: "",
                 duplicable = duplicable,
             ),
             join = Join(method = joinMethod),

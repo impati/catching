@@ -4,7 +4,9 @@ import org.example.impati.catching.auth.AuthMode
 import org.example.impati.catching.auth.Member
 import org.example.impati.catching.auth.MemberClient
 import org.example.impati.catching.auth.Token
+import org.example.impati.catching.auth.exception.ExpiredTokenException
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
@@ -56,10 +58,19 @@ class MemberAuthClient(
         return restClient.get()
             .uri("/api/v1/auth/me")
             .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
-            .retrieve()
-            .body(MemberClientResponse::class.java)
-            ?.toDomain()
-            ?: throw IllegalStateException("회원 서버의 회원 정보 응답이 비어 있습니다.")
+            .exchange<Member> { _, res ->
+                when (res.statusCode) {
+                    HttpStatus.OK ->
+                        res.bodyTo(MemberClientResponse::class.java)?.toDomain()
+                            ?: throw IllegalStateException("회원 서버의 회원 정보 응답이 비어 있습니다.")
+
+                    HttpStatus.UNAUTHORIZED ->
+                        throw ExpiredTokenException()
+
+                    else ->
+                        throw IllegalStateException("회원 서버의 회원 정보 조회에 실패했습니다: ${res.statusCode}")
+                }
+            }
     }
 
     private fun bearer(accessToken: String): String {

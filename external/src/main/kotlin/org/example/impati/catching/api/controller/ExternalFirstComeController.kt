@@ -4,14 +4,16 @@ import org.example.impati.catching.FirstComeQuery
 import org.example.impati.catching.api.response.FirstComeResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 
 @RestController
-class FirstComeController(
+class ExternalFirstComeController(
     private val firstComeQuery: FirstComeQuery
 ) {
 
     @GetMapping("/v1/comes")
     fun comes(): List<FirstComeResponse> {
-        return firstComeQuery.findAll().map { FirstComeResponse.from(it) }
+        return firstComeQuery.findByDisplayable(LocalDateTime.now())
+            .map { FirstComeResponse.from(it) }
     }
 }

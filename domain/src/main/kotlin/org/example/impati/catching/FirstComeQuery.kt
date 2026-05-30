@@ -3,6 +3,7 @@ package org.example.impati.catching
 import org.example.impati.catching.first_come.FirstCome
 import org.example.impati.catching.first_come.FirstComeRepository
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 @Component
 class FirstComeQuery(
@@ -15,5 +16,9 @@ class FirstComeQuery(
 
     fun findAll(): List<FirstCome> {
         return firstComeRepository.findAll();
+    }
+
+    fun findByDisplayable(now: LocalDateTime): List<FirstCome> {
+        return firstComeRepository.findByDisplayable(now);
     }
 }

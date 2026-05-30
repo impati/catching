@@ -1,5 +1,6 @@
 package org.example.impati.catching.first_come
 
+import java.time.LocalDateTime
 import java.util.*
 
 interface FirstComeRepository {
@@ -9,4 +10,6 @@ interface FirstComeRepository {
     fun findById(id: String): Optional<FirstCome>
 
     fun findAll(): List<FirstCome>
+
+    fun findByDisplayable(now: LocalDateTime): List<FirstCome>
 }
