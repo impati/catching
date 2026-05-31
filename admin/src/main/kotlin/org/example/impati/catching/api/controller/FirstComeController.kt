@@ -2,7 +2,6 @@ package org.example.impati.catching.api.controller
 
 import jakarta.validation.Valid
 import org.example.impati.catching.FirstComeCommand
-import org.example.impati.catching.FirstComeQuery
 import org.example.impati.catching.api.request.CreateFirstComeRequest
 import org.example.impati.catching.api.response.FirstComeResponse
 import org.springframework.http.HttpStatus
@@ -11,8 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/v1")
 class FirstComeController(
-    private val firstComeCommand: FirstComeCommand,
-    private val firstComeQuery: FirstComeQuery
+    private val firstComeCommand: FirstComeCommand
 ) {
 
     @PostMapping("/comes")
@@ -22,9 +20,10 @@ class FirstComeController(
         return FirstComeResponse.from(createdFirstCome)
     }
 
-    @GetMapping("/comes")
+    @PostMapping("/comes/{id}/approve")
     @ResponseStatus(HttpStatus.OK)
-    fun getAll(): List<FirstComeResponse> {
-        return firstComeQuery.findAll().map { FirstComeResponse.from(it) }
+    fun create(@PathVariable id: String): FirstComeResponse {
+        val approvedFirstCome = firstComeCommand.approved(id);
+        return FirstComeResponse.from(approvedFirstCome)
     }
 }

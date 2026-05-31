@@ -7,13 +7,16 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 
-class FirstComeQueryTest : IntegrationTest() {
+class CreatedFirstComeQueryTest : IntegrationTest() {
 
     @Autowired
     lateinit var sut: FirstComeQuery;
 
+    @Autowired
+    lateinit var command: FirstComeCommand;
+
     @Test
-    fun `노출일시보다 같거나 큰 선착순 이벤트를 가져온다`() {
+    fun `승인되었고 활성 시간에 포함된 선착순 이벤트를 가져온다`() {
         val now = LocalDateTime.now()
         val firstComeA = firstCome {
             id = "A"
@@ -42,8 +45,11 @@ class FirstComeQueryTest : IntegrationTest() {
         firstComeRepository.save(firstComeA)
         firstComeRepository.save(firstComeB)
         firstComeRepository.save(firstComeC)
+        command.approved(firstComeA.id)
+        command.approved(firstComeB.id)
+        command.approved(firstComeC.id)
 
-        val result = sut.findByDisplayable(now);
+        val result = sut.findByActive(now);
 
         assertThat(result).extracting("id")
             .containsExactlyInAnyOrder(firstComeA.id, firstComeB.id)

@@ -13,7 +13,7 @@ class ExternalFirstComeController(
 
     @GetMapping("/v1/comes")
     fun comes(): List<FirstComeResponse> {
-        return firstComeQuery.findByDisplayable(LocalDateTime.now())
+        return firstComeQuery.findByActive(LocalDateTime.now())
             .map { FirstComeResponse.from(it) }
     }
 }

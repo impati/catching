@@ -5,11 +5,13 @@ import java.util.*
 
 interface FirstComeRepository {
 
-    fun save(firstCome: FirstCome): FirstCome
+    fun save(createdFirstCome: CreatedFirstCome): CreatedFirstCome
 
-    fun findById(id: String): Optional<FirstCome>
+    fun save(approvedFirstCome: ApprovedFirstCome): ApprovedFirstCome
 
-    fun findAll(): List<FirstCome>
+    fun findById(id: String): Optional<CreatedFirstCome>
 
-    fun findByDisplayable(now: LocalDateTime): List<FirstCome>
+    fun findAll(): List<CreatedFirstCome>
+
+    fun findActiveBy(now: LocalDateTime): List<ActiveFirstCome>
 }

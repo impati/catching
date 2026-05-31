@@ -7,6 +7,6 @@ import java.time.LocalDateTime
 
 interface FirstComeEntityRepository : JpaRepository<FirstComeEntity, String> {
 
-    @Query("SELECT f FROM FirstComeEntity f WHERE f.displayAt <= :now")
-    fun findByDisplayable(@Param("now") now: LocalDateTime): List<FirstComeEntity>
+    @Query("SELECT f FROM FirstComeEntity f WHERE f.displayAt <= :now and f.endAt >= :now and f.approved = true")
+    fun findActiveBy(@Param("now") now: LocalDateTime): List<FirstComeEntity>
 }

@@ -1,9 +1,9 @@
 package org.example.impati.catching
 
-import org.example.impati.catching.first_come.FirstCome
+import org.example.impati.catching.first_come.ApprovedFirstCome
+import org.example.impati.catching.first_come.CreatedFirstCome
 import org.example.impati.catching.first_come.FirstComeInputVo
 import org.example.impati.catching.first_come.FirstComeRepository
-import org.example.impati.catching.first_come.FirstComeStatus
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -12,15 +12,14 @@ class FirstComeCommand(
     val firstComeRepository: FirstComeRepository
 ) {
 
-    fun create(input: FirstComeInputVo): FirstCome {
+    fun create(input: FirstComeInputVo): CreatedFirstCome {
         val id = UUID.randomUUID().toString().substring(0, 7);
 
-        val firstCome = firstComeRepository.save(
-            FirstCome(
+        val createdFirstCome = firstComeRepository.save(
+            CreatedFirstCome(
                 id,
                 input.name,
                 input.capacity,
-                FirstComeStatus.PENDING,
                 input.time,
                 input.eligibility,
                 input.join,
@@ -29,6 +28,13 @@ class FirstComeCommand(
             )
         )
 
-        return firstCome
+        return createdFirstCome
+    }
+
+    fun approved(id: String): ApprovedFirstCome {
+        val createdFirstCome = firstComeRepository.findById(id)
+            .orElseThrow { IllegalArgumentException("not found first come: $id") };
+
+        return firstComeRepository.save(createdFirstCome.approve())
     }
 }

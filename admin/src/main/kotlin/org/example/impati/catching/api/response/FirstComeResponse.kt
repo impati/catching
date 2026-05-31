@@ -1,13 +1,13 @@
 package org.example.impati.catching.api.response
 
-import org.example.impati.catching.first_come.FirstCome
-import org.example.impati.catching.first_come.FirstComeStatus
+import org.example.impati.catching.first_come.ApprovedFirstCome
+import org.example.impati.catching.first_come.CreatedFirstCome
 
 data class FirstComeResponse(
     val id: String,
     val name: String,
     val capacity: Int,
-    val status: FirstComeStatus,
+    val status: String,
     val time: FirstComeTimeResponse,
     val eligibility: EligibilityResponse,
     val join: JoinResponse,
@@ -17,27 +17,50 @@ data class FirstComeResponse(
 
     companion object {
 
-        fun from(firstCome: FirstCome): FirstComeResponse =
+        fun from(createdFirstCome: CreatedFirstCome): FirstComeResponse =
             FirstComeResponse(
-                id = firstCome.id,
-                name = firstCome.name.value,
-                capacity = firstCome.capacity.value,
-                status = firstCome.status,
+                id = createdFirstCome.id,
+                name = createdFirstCome.name.value,
+                capacity = createdFirstCome.capacity.value,
+                status = "CREATED",
                 time = FirstComeTimeResponse(
-                    startAt = firstCome.time.startAt,
-                    endAt = firstCome.time.endAt,
-                    displayAt = firstCome.time.displayAt,
+                    startAt = createdFirstCome.time.startAt,
+                    endAt = createdFirstCome.time.endAt,
+                    displayAt = createdFirstCome.time.displayAt,
                 ),
                 eligibility = EligibilityResponse(
-                    value = firstCome.eligibility.value,
-                    duplicable = firstCome.eligibility.duplicable,
+                    value = createdFirstCome.eligibility.value,
+                    duplicable = createdFirstCome.eligibility.duplicable,
                 ),
-                join = JoinResponse(method = firstCome.join.method),
+                join = JoinResponse(method = createdFirstCome.join.method),
                 waitPolicy = WaitPolicyResponse(
-                    waitType = firstCome.waitPolicy.waitType,
-                    capacity = firstCome.waitPolicy.capacity,
+                    waitType = createdFirstCome.waitPolicy.waitType,
+                    capacity = createdFirstCome.waitPolicy.capacity,
                 ),
-                organizer = firstCome.organizer.value,
+                organizer = createdFirstCome.organizer.value,
+            )
+
+        fun from(createdFirstCome: ApprovedFirstCome): FirstComeResponse =
+            FirstComeResponse(
+                id = createdFirstCome.id,
+                name = createdFirstCome.name.value,
+                capacity = createdFirstCome.capacity.value,
+                status = "READY",
+                time = FirstComeTimeResponse(
+                    startAt = createdFirstCome.time.startAt,
+                    endAt = createdFirstCome.time.endAt,
+                    displayAt = createdFirstCome.time.displayAt,
+                ),
+                eligibility = EligibilityResponse(
+                    value = createdFirstCome.eligibility.value,
+                    duplicable = createdFirstCome.eligibility.duplicable,
+                ),
+                join = JoinResponse(method = createdFirstCome.join.method),
+                waitPolicy = WaitPolicyResponse(
+                    waitType = createdFirstCome.waitPolicy.waitType,
+                    capacity = createdFirstCome.waitPolicy.capacity,
+                ),
+                organizer = createdFirstCome.organizer.value,
             )
     }
 }

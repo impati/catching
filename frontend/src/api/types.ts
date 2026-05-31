@@ -1,6 +1,6 @@
 export type JoinMethod = 'IMMEDIATELY'
 export type WaitType = 'WAITLIST'
-export type FirstComeStatus = 'PENDING'
+export type FirstComeStatus = 'CREATED' | 'READY' | 'ON_GOING'
 
 export interface FirstComeTimeResponse {
   startAt: string

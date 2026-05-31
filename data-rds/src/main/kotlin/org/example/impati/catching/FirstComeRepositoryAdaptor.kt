@@ -1,6 +1,8 @@
 package org.example.impati.catching
 
-import org.example.impati.catching.first_come.FirstCome
+import org.example.impati.catching.first_come.ActiveFirstCome
+import org.example.impati.catching.first_come.ApprovedFirstCome
+import org.example.impati.catching.first_come.CreatedFirstCome
 import org.example.impati.catching.first_come.FirstComeRepository
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -11,19 +13,23 @@ class FirstComeRepositoryAdaptor(
     private val firstComeEntityRepository: FirstComeEntityRepository
 ) : FirstComeRepository {
 
-    override fun save(firstCome: FirstCome): FirstCome {
-        return firstComeEntityRepository.save(FirstComeEntity.from(firstCome)).toDomain();
+    override fun save(createdFirstCome: CreatedFirstCome): CreatedFirstCome {
+        return firstComeEntityRepository.save(FirstComeEntity.from(createdFirstCome)).toCreated();
     }
 
-    override fun findById(id: String): Optional<FirstCome> {
-        return firstComeEntityRepository.findById(id).map { it.toDomain() };
+    override fun save(approvedFirstCome: ApprovedFirstCome): ApprovedFirstCome {
+        return firstComeEntityRepository.save(FirstComeEntity.from(approvedFirstCome)).toApproved()
     }
 
-    override fun findAll(): List<FirstCome> {
-        return firstComeEntityRepository.findAll().map { it.toDomain() }
+    override fun findById(id: String): Optional<CreatedFirstCome> {
+        return firstComeEntityRepository.findById(id).map { it.toCreated() };
     }
 
-    override fun findByDisplayable(now: LocalDateTime): List<FirstCome> {
-        return firstComeEntityRepository.findByDisplayable(now).map { it.toDomain() }
+    override fun findAll(): List<CreatedFirstCome> {
+        return firstComeEntityRepository.findAll().map { it.toCreated() }
+    }
+
+    override fun findActiveBy(now: LocalDateTime): List<ActiveFirstCome> {
+        return firstComeEntityRepository.findActiveBy(now).map { it.toActive(now) }
     }
 }

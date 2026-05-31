@@ -18,9 +18,8 @@ class FirstComeEntity(
     @Column(name = "capacity", nullable = false)
     var capacity: Int,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    var status: FirstComeStatus,
+    @Column(name = "approved", nullable = false)
+    var approved: Boolean,
 
     @Column(name = "start_at", nullable = false)
     var startAt: LocalDateTime,
@@ -54,31 +53,50 @@ class FirstComeEntity(
 ) {
 
     companion object {
-        fun from(firstCome: FirstCome): FirstComeEntity {
+        fun from(createdFirstCome: CreatedFirstCome): FirstComeEntity {
             return FirstComeEntity(
-                id = firstCome.id,
-                name = firstCome.name.value,
-                capacity = firstCome.capacity.value,
-                status = firstCome.status,
-                startAt = firstCome.time.startAt,
-                endAt = firstCome.time.endAt,
-                displayAt = firstCome.time.displayAt,
-                eligibility = firstCome.eligibility.value,
-                duplicable = firstCome.eligibility.duplicable,
-                joinMethod = firstCome.join.method,
-                waitType = firstCome.waitPolicy.waitType,
-                waitCapacity = firstCome.waitPolicy.capacity,
-                organizer = firstCome.organizer.value
+                id = createdFirstCome.id,
+                name = createdFirstCome.name.value,
+                capacity = createdFirstCome.capacity.value,
+                approved = false,
+                startAt = createdFirstCome.time.startAt,
+                endAt = createdFirstCome.time.endAt,
+                displayAt = createdFirstCome.time.displayAt,
+                eligibility = createdFirstCome.eligibility.value,
+                duplicable = createdFirstCome.eligibility.duplicable,
+                joinMethod = createdFirstCome.join.method,
+                waitType = createdFirstCome.waitPolicy.waitType,
+                waitCapacity = createdFirstCome.waitPolicy.capacity,
+                organizer = createdFirstCome.organizer.value
+            )
+        }
+
+        fun from(createdFirstCome: ApprovedFirstCome): FirstComeEntity {
+            return FirstComeEntity(
+                id = createdFirstCome.id,
+                name = createdFirstCome.name.value,
+                capacity = createdFirstCome.capacity.value,
+                approved = true,
+                startAt = createdFirstCome.time.startAt,
+                endAt = createdFirstCome.time.endAt,
+                displayAt = createdFirstCome.time.displayAt,
+                eligibility = createdFirstCome.eligibility.value,
+                duplicable = createdFirstCome.eligibility.duplicable,
+                joinMethod = createdFirstCome.join.method,
+                waitType = createdFirstCome.waitPolicy.waitType,
+                waitCapacity = createdFirstCome.waitPolicy.capacity,
+                organizer = createdFirstCome.organizer.value
             )
         }
     }
 
-    fun toDomain(): FirstCome {
-        return FirstCome(
+    fun toCreated(): CreatedFirstCome {
+        check(!approved) { "already approved" }
+
+        return CreatedFirstCome(
             id = id,
             name = FirstComeName(name),
             capacity = FirstComeCapacity(capacity),
-            status = status,
             time = FirstComeTime(
                 startAt = startAt,
                 endAt = endAt,
@@ -97,5 +115,36 @@ class FirstComeEntity(
             ),
             organizer = Organizer(organizer)
         )
+    }
+
+    fun toApproved(): ApprovedFirstCome {
+        check(approved) { "must be approved" }
+
+        return ApprovedFirstCome(
+            id = id,
+            name = FirstComeName(name),
+            capacity = FirstComeCapacity(capacity),
+            time = FirstComeTime(
+                startAt = startAt,
+                endAt = endAt,
+                displayAt = displayAt
+            ),
+            eligibility = Eligibility(
+                value = eligibility,
+                duplicable = duplicable
+            ),
+            join = Join(
+                method = joinMethod
+            ),
+            waitPolicy = WaitPolicy(
+                waitType = waitType,
+                capacity = waitCapacity
+            ),
+            organizer = Organizer(organizer)
+        )
+    }
+
+    fun toActive(now: LocalDateTime): ActiveFirstCome {
+        return toApproved().toActive(now)
     }
 }
