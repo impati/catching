@@ -2,7 +2,7 @@ package org.example.impati.catching
 
 import org.assertj.core.api.Assertions.assertThat
 import org.example.impati.catching.first_come.FirstComeTime
-import org.example.impati.testsupport.fixture.firstCome
+import org.example.impati.fixture.firstCome
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime

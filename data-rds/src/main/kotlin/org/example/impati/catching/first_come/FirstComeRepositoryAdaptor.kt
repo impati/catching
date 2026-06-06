@@ -1,9 +1,5 @@
-package org.example.impati.catching
+package org.example.impati.catching.first_come
 
-import org.example.impati.catching.first_come.ActiveFirstCome
-import org.example.impati.catching.first_come.ApprovedFirstCome
-import org.example.impati.catching.first_come.CreatedFirstCome
-import org.example.impati.catching.first_come.FirstComeRepository
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.util.*
@@ -23,6 +19,10 @@ class FirstComeRepositoryAdaptor(
 
     override fun findById(id: String): Optional<CreatedFirstCome> {
         return firstComeEntityRepository.findById(id).map { it.toCreated() };
+    }
+
+    override fun findActiveById(id: String, now: LocalDateTime): Optional<ActiveFirstCome> {
+        return firstComeEntityRepository.findById(id).map { it.toActive(now) }
     }
 
     override fun findAll(): List<CreatedFirstCome> {

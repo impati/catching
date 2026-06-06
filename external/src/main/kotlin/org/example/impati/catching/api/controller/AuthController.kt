@@ -44,9 +44,7 @@ class AuthController(
     }
 
     @GetMapping("/v1/auth/me")
-    fun me(
-        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
-    ): MemberResponse {
+    fun me(@RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String): MemberResponse {
         return MemberResponse.from(
             memberClient.findMember(authorization)
         )

@@ -11,6 +11,8 @@ interface FirstComeRepository {
 
     fun findById(id: String): Optional<CreatedFirstCome>
 
+    fun findActiveById(id: String, now: LocalDateTime): Optional<ActiveFirstCome>
+
     fun findAll(): List<CreatedFirstCome>
 
     fun findActiveBy(now: LocalDateTime): List<ActiveFirstCome>

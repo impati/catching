@@ -1,4 +1,4 @@
-package org.example.impati.testsupport.fixture
+package org.example.impati.fixture
 
 import org.example.impati.catching.first_come.*
 import java.time.LocalDateTime

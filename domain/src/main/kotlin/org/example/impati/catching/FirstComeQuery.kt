@@ -13,4 +13,9 @@ class FirstComeQuery(
     fun findByActive(now: LocalDateTime): List<ActiveFirstCome> {
         return firstComeRepository.findActiveBy(now);
     }
+
+    fun findById(comeId: String, now: LocalDateTime): ActiveFirstCome {
+        return firstComeRepository.findActiveById(comeId, now)
+            .orElseThrow();
+    }
 }

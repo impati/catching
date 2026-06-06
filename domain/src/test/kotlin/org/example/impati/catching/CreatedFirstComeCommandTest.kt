@@ -1,7 +1,7 @@
 package org.example.impati.catching
 
 import org.assertj.core.api.Assertions.assertThat
-import org.example.impati.testsupport.fixture.firstComeInput
+import org.example.impati.fixture.firstComeInput
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 

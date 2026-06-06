@@ -82,4 +82,5 @@ data class ActiveFirstCome(
         require(displayAt <= now) { "displayAt must be greater than now" }
         require(now <= endAt) { "now must be less than endAt" }
     }
+
 }
