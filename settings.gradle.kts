@@ -6,6 +6,7 @@ include("domain-model")
 
 // data
 include("data-rds")
+include("data-redis")
 
 // client
 include("client-member")

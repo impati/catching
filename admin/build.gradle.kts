@@ -8,6 +8,7 @@ dependencies {
 
     implementation(project(":domain"))
     runtimeOnly(project(":data-rds"))
+    runtimeOnly(project(":data-redis"))
 }
 
 tasks.getByName<BootJar>("bootJar") {
@@ -17,4 +18,3 @@ tasks.getByName<BootJar>("bootJar") {
 tasks.getByName<Jar>("jar") {
     enabled = true
 }
-

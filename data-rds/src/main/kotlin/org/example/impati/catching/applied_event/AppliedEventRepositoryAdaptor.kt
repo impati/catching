@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class AppliedEventRepositoryAdaptor(
-    private val appliedEventEntityRepository: AppliedEventEntityRepository
+    private val appliedEventEntityRepository: AppliedEventEntityRepository,
 ) : AppliedEventRepository {
     override fun save(appliedEvent: AppliedEvent) {
         appliedEventEntityRepository.save(AppliedEventEntity.from(appliedEvent))

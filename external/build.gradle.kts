@@ -7,6 +7,7 @@ dependencies {
 
     implementation(project(":domain"))
     runtimeOnly(project(":data-rds"))
+    runtimeOnly(project(":data-redis"))
     runtimeOnly(project(":client-member"))
 }
 

@@ -4,11 +4,20 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "alternate_event")
+@Table(
+    name = "alternate_event",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_alternate_event_first_come_member",
+            columnNames = ["first_come_id", "member_id"]
+        )
+    ]
+)
 class AlternateEventEntity(
 
     @Id

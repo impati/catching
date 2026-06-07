@@ -2,8 +2,10 @@ package org.example.impati.catching
 
 import org.assertj.core.api.Assertions
 import org.example.impati.catching.auth.Member
+import org.example.impati.catching.applied_event.exception.ApplyFailException
 import org.example.impati.catching.first_come.FirstComeTime
 import org.example.impati.fixture.firstCome
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
@@ -16,6 +18,16 @@ class AppliedEventCommandTest : IntegrationTest() {
 
     @Autowired
     lateinit var sut: AppliedEventCommand;
+
+    @BeforeEach
+    fun setUp() {
+        val connection = redisTemplate.connectionFactory!!.connection
+        try {
+            connection.serverCommands().flushDb()
+        } finally {
+            connection.close()
+        }
+    }
 
     @Test
     fun `선착순 이벤트를 신청한다`() {
@@ -38,7 +50,7 @@ class AppliedEventCommandTest : IntegrationTest() {
     }
 
     @Test
-    fun `선착순 이벤트를 동시에 신청해도 정원만큼만 신청된다`() {
+    fun `선착순 이벤트를 동시에 신청해도 정원만큼만 성공한다`() {
         val now = LocalDateTime.now()
         val capacity = 10
         val applicantCount = 50
@@ -78,8 +90,56 @@ class AppliedEventCommandTest : IntegrationTest() {
         doneLatch.await(10, TimeUnit.SECONDS)
         executorService.shutdown()
 
-        Assertions.assertThat(errors).isEmpty()
+        Assertions.assertThat(errors)
+            .hasSize(applicantCount - capacity)
+            .allMatch { it is ApplyFailException }
         Assertions.assertThat(appliedEventRepository.count(firstCome)).isEqualTo(capacity)
-        Assertions.assertThat(alternateEventRepository.count(firstCome)).isEqualTo(applicantCount - capacity)
+    }
+
+    @Test
+    fun `Redis 카운터를 사용해 동시에 신청해도 정원만큼만 성공한다`() {
+        val now = LocalDateTime.now()
+        val capacity = 10
+        val applicantCount = 50
+        val firstCome = firstCome {
+            id = "redis-concurrent-first-come"
+            this.capacity = capacity
+            time = FirstComeTime(
+                now.minusDays(2),
+                now.plusDays(3),
+                now.minusDays(1),
+            )
+        }.approve().toActive(now)
+
+        val executorService = Executors.newFixedThreadPool(applicantCount)
+        val readyLatch = CountDownLatch(applicantCount)
+        val startLatch = CountDownLatch(1)
+        val doneLatch = CountDownLatch(applicantCount)
+        val errors = ConcurrentLinkedQueue<Throwable>()
+
+        repeat(applicantCount) { index ->
+            executorService.submit {
+                try {
+                    readyLatch.countDown()
+                    startLatch.await()
+
+                    sut.applyForVer2(firstCome, Member("redis-tester-$index", "redis-tester-$index"))
+                } catch (exception: Throwable) {
+                    errors.add(exception)
+                } finally {
+                    doneLatch.countDown()
+                }
+            }
+        }
+
+        readyLatch.await(5, TimeUnit.SECONDS)
+        startLatch.countDown()
+        doneLatch.await(10, TimeUnit.SECONDS)
+        executorService.shutdown()
+
+        Assertions.assertThat(errors)
+            .hasSize(applicantCount - capacity)
+            .allMatch { it is ApplyFailException }
+        Assertions.assertThat(appliedEventRepository.count(firstCome)).isEqualTo(capacity)
     }
 }
