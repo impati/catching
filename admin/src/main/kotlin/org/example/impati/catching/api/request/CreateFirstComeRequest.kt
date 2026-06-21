@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
+import org.example.impati.catching.field.Field
 import org.example.impati.catching.first_come.*
 import java.time.LocalDateTime
 
@@ -36,6 +37,8 @@ data class CreateFirstComeRequest(
 
     val waitCapacity: Int? = null,
 
+    val fields: List<Field> = emptyList(),
+
     @field:NotBlank
     val organizer: String
 ) {
@@ -55,6 +58,7 @@ data class CreateFirstComeRequest(
             ),
             join = Join(method = joinMethod),
             waitPolicy = waitPolicy,
+            fields = fields,
             organizer = Organizer(organizer),
         )
     }

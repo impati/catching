@@ -24,6 +24,7 @@ class FirstComeCommand(
                 input.eligibility,
                 input.join,
                 input.waitPolicy,
+                input.fields,
                 input.organizer
             )
         )

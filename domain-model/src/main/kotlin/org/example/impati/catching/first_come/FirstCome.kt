@@ -1,5 +1,6 @@
 package org.example.impati.catching.first_come
 
+import org.example.impati.catching.field.Field
 import java.time.LocalDateTime
 
 sealed interface FirstCome {
@@ -10,6 +11,7 @@ sealed interface FirstCome {
     val eligibility: Eligibility
     val join: Join
     val waitPolicy: WaitPolicy
+    val fields: List<Field>
     val organizer: Organizer
 }
 
@@ -21,7 +23,8 @@ data class CreatedFirstCome(
     override val eligibility: Eligibility,
     override val join: Join,
     override val waitPolicy: WaitPolicy,
-    override val organizer: Organizer
+    override val fields: List<Field>,
+    override val organizer: Organizer,
 ) : FirstCome {
 
     fun approve(): ApprovedFirstCome {
@@ -33,6 +36,7 @@ data class CreatedFirstCome(
             eligibility = eligibility,
             join = join,
             waitPolicy = waitPolicy,
+            fields = fields,
             organizer = organizer
         )
     }
@@ -46,6 +50,7 @@ data class ApprovedFirstCome(
     override val eligibility: Eligibility,
     override val join: Join,
     override val waitPolicy: WaitPolicy,
+    override val fields: List<Field>,
     override val organizer: Organizer
 ) : FirstCome {
 
@@ -58,6 +63,7 @@ data class ApprovedFirstCome(
             eligibility = eligibility,
             join = join,
             waitPolicy = waitPolicy,
+            fields = fields,
             organizer = organizer,
             now = now
         )
@@ -72,6 +78,7 @@ data class ActiveFirstCome(
     override val eligibility: Eligibility,
     override val join: Join,
     override val waitPolicy: WaitPolicy,
+    override val fields: List<Field>,
     override val organizer: Organizer,
     val now: LocalDateTime
 ) : FirstCome {

@@ -12,6 +12,7 @@ data class FirstComeResponse(
     val eligibility: EligibilityResponse,
     val join: JoinResponse,
     val waitPolicy: WaitPolicyResponse,
+    val fields: List<FieldResponse>,
     val organizer: String,
 ) {
 
@@ -37,30 +38,32 @@ data class FirstComeResponse(
                     waitType = createdFirstCome.waitPolicy.waitType,
                     capacity = createdFirstCome.waitPolicy.capacity,
                 ),
+                fields = createdFirstCome.fields.map { FieldResponse.from(it) },
                 organizer = createdFirstCome.organizer.value,
             )
 
-        fun from(createdFirstCome: ApprovedFirstCome): FirstComeResponse =
+        fun from(approvedFirstCome: ApprovedFirstCome): FirstComeResponse =
             FirstComeResponse(
-                id = createdFirstCome.id,
-                name = createdFirstCome.name.value,
-                capacity = createdFirstCome.capacity.value,
+                id = approvedFirstCome.id,
+                name = approvedFirstCome.name.value,
+                capacity = approvedFirstCome.capacity.value,
                 status = "READY",
                 time = FirstComeTimeResponse(
-                    startAt = createdFirstCome.time.startAt,
-                    endAt = createdFirstCome.time.endAt,
-                    displayAt = createdFirstCome.time.displayAt,
+                    startAt = approvedFirstCome.time.startAt,
+                    endAt = approvedFirstCome.time.endAt,
+                    displayAt = approvedFirstCome.time.displayAt,
                 ),
                 eligibility = EligibilityResponse(
-                    value = createdFirstCome.eligibility.value,
-                    duplicable = createdFirstCome.eligibility.duplicable,
+                    value = approvedFirstCome.eligibility.value,
+                    duplicable = approvedFirstCome.eligibility.duplicable,
                 ),
-                join = JoinResponse(method = createdFirstCome.join.method),
+                join = JoinResponse(method = approvedFirstCome.join.method),
                 waitPolicy = WaitPolicyResponse(
-                    waitType = createdFirstCome.waitPolicy.waitType,
-                    capacity = createdFirstCome.waitPolicy.capacity,
+                    waitType = approvedFirstCome.waitPolicy.waitType,
+                    capacity = approvedFirstCome.waitPolicy.capacity,
                 ),
-                organizer = createdFirstCome.organizer.value,
+                fields = approvedFirstCome.fields.map { FieldResponse.from(it) },
+                organizer = approvedFirstCome.organizer.value,
             )
     }
 }

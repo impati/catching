@@ -8,21 +8,20 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/v1")
 class FirstComeController(
     private val firstComeCommand: FirstComeCommand
 ) {
 
-    @PostMapping("/comes")
+    @PostMapping("/v1/comes")
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody body: CreateFirstComeRequest): FirstComeResponse {
         val createdFirstCome = firstComeCommand.create(body.toInputVo())
         return FirstComeResponse.from(createdFirstCome)
     }
 
-    @PostMapping("/comes/{id}/approve")
+    @PostMapping("/v1/comes/{id}/approve")
     @ResponseStatus(HttpStatus.OK)
-    fun create(@PathVariable id: String): FirstComeResponse {
+    fun approve(@PathVariable id: String): FirstComeResponse {
         val approvedFirstCome = firstComeCommand.approved(id);
         return FirstComeResponse.from(approvedFirstCome)
     }

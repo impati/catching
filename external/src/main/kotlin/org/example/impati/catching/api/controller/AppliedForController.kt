@@ -5,8 +5,8 @@ import org.example.impati.catching.AppliedEventQuery
 import org.example.impati.catching.FirstComeQuery
 import org.example.impati.catching.MemberQuery
 import org.example.impati.catching.api.response.AppliedEventResponse
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
@@ -18,19 +18,6 @@ class AppliedForController(
     private val firstComeQuery: FirstComeQuery,
     private val memberQuery: MemberQuery
 ) {
-
-    /**
-     * 선착순 신청
-     */
-    @PostMapping("/v1/comes/{comeId}/apply-for")
-    fun applyFor(
-        @PathVariable comeId: String,
-        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String
-    ) {
-        val member = memberQuery.getMember(authorization);
-        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
-        appliedEventCommand.applyFor(firstCome, member)
-    }
 
     /**
      * 선착순 신청 결과
@@ -47,4 +34,21 @@ class AppliedForController(
 
         return AppliedEventResponse.from(appliedEvent);
     }
+
+    /**
+     * 선착순 신청 - 1단계, 신청
+     */
+    @PostMapping("/v1/comes/{comeId}/apply-for")
+    fun applyFor(
+        @PathVariable comeId: String,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String
+    ) {
+        val member = memberQuery.getMember(authorization);
+        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        appliedEventCommand.applyFor(firstCome, member)
+    }
+
+    /**
+     * 선착순 신청 - 2단계, 정보 입력
+     */
 }
