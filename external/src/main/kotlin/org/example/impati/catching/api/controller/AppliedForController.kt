@@ -5,8 +5,10 @@ import org.example.impati.catching.AppliedEventQuery
 import org.example.impati.catching.FirstComeQuery
 import org.example.impati.catching.MemberQuery
 import org.example.impati.catching.api.response.AppliedEventResponse
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
 
 @RestController
@@ -17,6 +19,9 @@ class AppliedForController(
     private val memberQuery: MemberQuery
 ) {
 
+    /**
+     * 선착순 신청
+     */
     @PostMapping("/v1/comes/{comeId}/apply-for")
     fun applyFor(
         @PathVariable comeId: String,
@@ -27,6 +32,9 @@ class AppliedForController(
         appliedEventCommand.applyFor(firstCome, member)
     }
 
+    /**
+     * 선착순 신청 결과
+     */
     @GetMapping("/v1/comes/{comeId}/apply-for")
     fun getApplyFor(
         @PathVariable comeId: String,
@@ -34,7 +42,9 @@ class AppliedForController(
     ): AppliedEventResponse {
         val member = memberQuery.getMember(authorization);
         val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        val appliedEvent = appliedEventQuery.findAppliedEvent(firstCome, member)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Applied event not found")
 
-        return AppliedEventResponse.from(appliedEventQuery.getAppliedEvent(firstCome, member));
+        return AppliedEventResponse.from(appliedEvent);
     }
 }

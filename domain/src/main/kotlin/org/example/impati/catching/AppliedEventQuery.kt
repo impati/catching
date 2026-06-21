@@ -12,9 +12,17 @@ class AppliedEventQuery(
 ) {
 
     fun getAppliedEvent(firstCome: FirstCome, member: Member): AppliedEvent {
-        val appliedEvent = appliedEventRepository.findBy(firstCome, member)
+        val appliedEvent = findAppliedEvent(firstCome, member)
             ?: throw IllegalArgumentException("Applied event not found for first come: $firstCome and member: $member")
 
         return appliedEvent
+    }
+
+    fun findAppliedEvent(firstCome: FirstCome, member: Member): AppliedEvent? {
+        return appliedEventRepository.findBy(firstCome, member)
+    }
+
+    fun countAppliedEvents(firstCome: FirstCome): Int {
+        return appliedEventRepository.count(firstCome);
     }
 }

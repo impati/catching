@@ -11,32 +11,34 @@ data class FirstComeResponse(
     val eligibility: EligibilityResponse,
     val join: JoinResponse,
     val waitPolicy: WaitPolicyResponse,
+    val appliedEventNumber: Int,
     val organizer: String,
 ) {
 
     companion object {
 
-        fun from(createdFirstCome: ActiveFirstCome): FirstComeResponse =
+        fun of(firstCome: ActiveFirstCome, appliedEventNumber: Int): FirstComeResponse =
             FirstComeResponse(
-                id = createdFirstCome.id,
-                name = createdFirstCome.name.value,
-                capacity = createdFirstCome.capacity.value,
-                status = "ON_GOING",
+                id = firstCome.id,
+                name = firstCome.name.value,
+                capacity = firstCome.capacity.value,
+                status = "ACTIVE",
                 time = FirstComeTimeResponse(
-                    startAt = createdFirstCome.time.startAt,
-                    endAt = createdFirstCome.time.endAt,
-                    displayAt = createdFirstCome.time.displayAt,
+                    startAt = firstCome.time.startAt,
+                    endAt = firstCome.time.endAt,
+                    displayAt = firstCome.time.displayAt,
                 ),
                 eligibility = EligibilityResponse(
-                    value = createdFirstCome.eligibility.value,
-                    duplicable = createdFirstCome.eligibility.duplicable,
+                    value = firstCome.eligibility.value,
+                    duplicable = firstCome.eligibility.duplicable,
                 ),
-                join = JoinResponse(method = createdFirstCome.join.method),
+                join = JoinResponse(method = firstCome.join.method),
                 waitPolicy = WaitPolicyResponse(
-                    waitType = createdFirstCome.waitPolicy.waitType,
-                    capacity = createdFirstCome.waitPolicy.capacity,
+                    waitType = firstCome.waitPolicy.waitType,
+                    capacity = firstCome.waitPolicy.capacity,
                 ),
-                organizer = createdFirstCome.organizer.value,
+                appliedEventNumber = appliedEventNumber,
+                organizer = firstCome.organizer.value,
             )
     }
 }

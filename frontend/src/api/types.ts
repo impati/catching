@@ -1,6 +1,6 @@
 export type JoinMethod = 'IMMEDIATELY'
 export type WaitType = 'WAITLIST'
-export type FirstComeStatus = 'CREATED' | 'READY' | 'ON_GOING'
+export type FirstComeStatus = 'CREATED' | 'READY' | 'ON_GOING' | 'ACTIVE'
 
 export interface FirstComeTimeResponse {
   startAt: string
@@ -31,7 +31,13 @@ export interface FirstComeResponse {
   eligibility: EligibilityResponse
   join: JoinResponse
   waitPolicy: WaitPolicyResponse
+  appliedEventNumber: number
   organizer: string
+}
+
+export interface AppliedEventResponse {
+  firstComeId: string
+  memberId: string
 }
 
 export type AuthMode = 'login' | 'signup'
