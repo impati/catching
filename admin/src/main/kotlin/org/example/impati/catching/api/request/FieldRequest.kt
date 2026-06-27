@@ -6,5 +6,6 @@ data class FieldRequest(
     val name: String,
     val fieldType: FieldType,
     val dataSource: String?,
-    val domain: List<String>?
+    val domain: List<String>?,
+    val required: Boolean
 )

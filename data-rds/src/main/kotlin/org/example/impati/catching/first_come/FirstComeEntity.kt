@@ -1,5 +1,6 @@
 package org.example.impati.catching.first_come
 
+import org.example.impati.catching.field.FieldEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -47,7 +48,11 @@ class FirstComeEntity(
     var waitCapacity: Int?,
 
     @Column(name = "organizer", nullable = false)
-    var organizer: String
+    var organizer: String,
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "first_come_id")
+    var fields: MutableList<FieldEntity> = mutableListOf(),
 
 ) {
 
@@ -112,6 +117,7 @@ class FirstComeEntity(
                 waitType = waitType,
                 capacity = waitCapacity
             ),
+            fields = fields.map { it.toDomain() },
             organizer = Organizer(organizer)
         )
     }
@@ -139,6 +145,7 @@ class FirstComeEntity(
                 waitType = waitType,
                 capacity = waitCapacity
             ),
+            fields = fields.map { it.toDomain() },
             organizer = Organizer(organizer)
         )
     }

@@ -1,7 +1,7 @@
 package org.example.impati.catching.field
 
-class DataSource(
+class Information(
     val name: String,
-    val url: String
+    val values: List<String>
 ) {
 }

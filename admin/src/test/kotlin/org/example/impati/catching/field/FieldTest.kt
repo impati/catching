@@ -24,7 +24,7 @@ class FieldTest {
 
     @Test
     fun `주소 필드`() {
-        val dataSource = DataSource("주소 데이터소스", "https://test.com")
+        val dataSource = Datasource("주소 데이터소스", "https://test.com")
         val field = DataSourceField(
             "주소",
             dataSource

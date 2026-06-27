@@ -1,9 +1,22 @@
--- Entity-based DDL reference.
--- This file is documentation only and is not wired to a migration tool.
--- Source entities:
--- - data-rds/src/main/kotlin/org/example/impati/catching/first_come/FirstComeEntity.kt
--- - data-rds/src/main/kotlin/org/example/impati/catching/applied_event/AppliedEventEntity.kt
--- - data-rds/src/main/kotlin/org/example/impati/catching/applied_event/AlternateEventEntity.kt
+CREATE TABLE datasource
+(
+    name       VARCHAR(255) NOT NULL,
+    url        VARCHAR(255) NOT NULL,
+    created_at DATETIME(6)  NOT NULL,
+    created_by VARCHAR(255) NOT NULL,
+    PRIMARY KEY (name)
+);
+
+CREATE TABLE field
+(
+    name            VARCHAR(255) NOT NULL,
+    field_type      VARCHAR(255) NOT NULL,
+    required        BIT          NOT NULL,
+    datasource_name VARCHAR(255) NULL,
+    first_come_id   VARCHAR(255) NULL,
+    domain          TEXT         NOT NULL,
+    PRIMARY KEY (name)
+);
 
 CREATE TABLE first_come
 (

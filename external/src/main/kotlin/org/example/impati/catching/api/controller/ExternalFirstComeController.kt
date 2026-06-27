@@ -14,12 +14,18 @@ class ExternalFirstComeController(
     private val appliedEventQuery: AppliedEventQuery
 ) {
 
+    /**
+     * 활성 선착순 이벤트 목록 조회
+     */
     @GetMapping("/v1/comes")
     fun comes(): List<FirstComeResponse> {
         return firstComeQuery.findByActive(LocalDateTime.now())
             .map { FirstComeResponse.of(it, appliedEventQuery.countAppliedEvents(it)) }
     }
 
+    /**
+     * 활성 선착순 이벤트 상세 조회
+     */
     @GetMapping("/v1/comes/{comeId}/active")
     fun comesDetail(@PathVariable comeId: String): FirstComeResponse {
         val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())

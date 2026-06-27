@@ -1,10 +1,11 @@
 package org.example.impati.catching.api.controller
 
-import org.example.impati.catching.AppliedEventCommand
-import org.example.impati.catching.AppliedEventQuery
-import org.example.impati.catching.FirstComeQuery
-import org.example.impati.catching.MemberQuery
+import org.example.impati.catching.*
+import org.example.impati.catching.api.request.InformationsRequest
 import org.example.impati.catching.api.response.AppliedEventResponse
+import org.example.impati.catching.api.response.FieldResponse
+import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
+import org.example.impati.catching.field.Information
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -14,6 +15,7 @@ import java.time.LocalDateTime
 @RestController
 class AppliedForController(
     private val appliedEventCommand: AppliedEventCommand,
+    private val appliedMemberCommand: AppliedMemberCommand,
     private val appliedEventQuery: AppliedEventQuery,
     private val firstComeQuery: FirstComeQuery,
     private val memberQuery: MemberQuery
@@ -49,6 +51,41 @@ class AppliedForController(
     }
 
     /**
+     * 선착순 신청 - 2단계, 정보 입력을 위한 필드 조회
+     */
+    @GetMapping("/v1/comes/{comeId}/fields")
+    fun getFields(
+        @PathVariable comeId: String,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String
+    ): List<FieldResponse> {
+        val member = memberQuery.getMember(authorization);
+        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        if (appliedEventQuery.findAppliedEvent(firstCome, member) == null) {
+            throw NotFoundAppliedEvent()
+        }
+
+        return firstCome.fields.map { FieldResponse.from(it) }
+    }
+
+    /**
      * 선착순 신청 - 2단계, 정보 입력
      */
+    @PostMapping("/v1/comes/{comeId}/information")
+    fun information(
+        @PathVariable comeId: String,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+        @RequestBody request: InformationsRequest
+    ) {
+        val member = memberQuery.getMember(authorization);
+        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        if (appliedEventQuery.findAppliedEvent(firstCome, member) == null) {
+            throw NotFoundAppliedEvent()
+        }
+
+        appliedMemberCommand.create(
+            firstCome,
+            member,
+            request.informations.map { Information(it.name, it.values) }
+        )
+    }
 }
