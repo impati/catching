@@ -60,3 +60,22 @@ CREATE TABLE alternate_event
     CONSTRAINT uk_alternate_event_first_come_member
         UNIQUE (first_come_id, member_id)
 );
+
+CREATE TABLE applied_member
+(
+    id            VARCHAR(255) NOT NULL,
+    first_come_id VARCHAR(255) NOT NULL,
+    member_id     VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_applied_member_first_come_member
+        UNIQUE (first_come_id, member_id)
+);
+
+CREATE TABLE applied_member_information
+(
+    id                 VARCHAR(255) NOT NULL,
+    applied_member_id  VARCHAR(255) NULL,
+    name               VARCHAR(255) NOT NULL,
+    information_values TEXT         NOT NULL,
+    PRIMARY KEY (id)
+);
