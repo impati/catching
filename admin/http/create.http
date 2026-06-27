@@ -2,20 +2,76 @@
 @host = http://localhost:8000
 
 ###
-# 선택 필드 포함 예시
+### 선착순 이벤트 생성
 POST {{host}}/v1/comes
 Content-Type: application/json
 
 {
-  "name": "한정 수량 판매",
+  "name": "마라톤 신청",
   "capacity": 50,
-  "startAt": "2026-05-01T12:00:00",
-  "endAt": "2026-05-01T12:30:00",
-  "displayAt": "2026-04-15T00:00:00",
-  "organizer": "A사",
+  "startAt": "2026-06-01T12:00:00",
+  "endAt": "2027-05-01T12:30:00",
+  "displayAt": "2026-06-01T00:00:00",
   "eligibility": "성인 회원",
   "duplicable": false,
   "joinMethod": "IMMEDIATELY",
   "waitType": "WAITLIST",
-  "waitCapacity": 100
+  "waitCapacity": 100,
+  "fields": [
+    "생년월일",
+    "성별",
+    "주소"
+  ],
+  "organizer": "A사"
 }
+
+### 선착순 이벤트 조회
+POST {{host}}/v1/comes
+Content-Type: application/json
+
+{
+  "name": "마라톤 신청",
+  "capacity": 50,
+  "startAt": "2026-06-01T12:00:00",
+  "endAt": "2027-05-01T12:30:00",
+  "displayAt": "2026-06-01T00:00:00",
+  "eligibility": "성인 회원",
+  "duplicable": false,
+  "joinMethod": "IMMEDIATELY",
+  "waitType": "WAITLIST",
+  "waitCapacity": 100,
+  "fields": [
+    "생년월일",
+    "성별",
+    "주소"
+  ],
+  "organizer": "A사"
+}
+
+### 데이터소스 생성
+POST {{host}}/v1/datasource
+Content-Type: application/json
+
+{
+  "name": "주소",
+  "url": "http://localhost:8081/v1//datasource/addrss",
+  "requestBy": "운영자"
+}
+
+### 필드 생성
+POST {{host}}/v1/fields
+Content-Type: application/json
+
+{
+  "name": "성별",
+  "fieldType": "SINGLE_DOMAIN",
+  "domain": [
+    "남성",
+    "여성"
+  ],
+  "required": true
+}
+
+
+### 필드 조회
+GET {{host}}/v1/fields

@@ -1,6 +1,7 @@
 package org.example.impati.fixture
 
 import org.example.impati.catching.first_come.*
+import org.example.impati.catching.field.Field
 import java.time.LocalDateTime
 
 fun firstComeInput(block: FirstComeInputBuilder.() -> Unit = {}): FirstComeInputVo {
@@ -31,6 +32,7 @@ class FirstComeInputBuilder {
     var eligibility: Eligibility = Eligibility.basic()
     var join: Join = Join(JoinMethod.IMMEDIATELY)
     var waitPolicy: WaitPolicy = WaitPolicy.waitlist()
+    var fields: List<String> = emptyList()
     var organizer: String = "impati"
 
     fun build(): FirstComeInputVo {
@@ -41,6 +43,7 @@ class FirstComeInputBuilder {
             eligibility = eligibility,
             join = join,
             waitPolicy = waitPolicy,
+            fields = fields,
             organizer = Organizer(organizer)
         )
     }
@@ -55,6 +58,7 @@ class FirstComeBuilder {
     var eligibility: Eligibility = Eligibility.basic()
     var join: Join = Join(JoinMethod.IMMEDIATELY)
     var waitPolicy: WaitPolicy = WaitPolicy.waitlist()
+    var fields: List<Field> = emptyList()
     var organizer: String = "impati"
 
     fun build(): CreatedFirstCome {
@@ -66,6 +70,7 @@ class FirstComeBuilder {
             eligibility = eligibility,
             join = join,
             waitPolicy = waitPolicy,
+            fields = fields,
             organizer = Organizer(organizer)
         )
     }

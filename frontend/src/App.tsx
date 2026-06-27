@@ -10,13 +10,28 @@ import {
   storeTokens,
   ApiError,
 } from './api/auth'
-import { applyForCome, fetchApplyFor, fetchComeDetail, fetchComes } from './api/comes'
-import type { AuthMode, FirstComeResponse, MemberResponse, TokenResponse } from './api/types'
+import {
+  applyForCome,
+  fetchApplyFor,
+  fetchComeDetail,
+  fetchComes,
+  fetchFields,
+  submitInformation,
+} from './api/comes'
+import type {
+  AuthMode,
+  FieldResponse,
+  FirstComeResponse,
+  InformationRequest,
+  MemberResponse,
+  TokenResponse,
+} from './api/types'
 import './App.css'
 
 const callbackTokenRequests = new Map<string, Promise<TokenResponse>>()
 
 type ApplyStatus = 'idle' | 'checking' | 'applied' | 'not_applied' | 'unknown'
+type InformationValues = Record<string, string[]>
 
 function readComeIdFromUrl() {
   return new URLSearchParams(window.location.search).get('comeId')
@@ -61,6 +76,36 @@ function getFillPercent(item: FirstComeResponse) {
     return 0
   }
   return Math.min((item.appliedEventNumber / item.capacity) * 100, 100)
+}
+
+function createInitialInformationValues(fields: FieldResponse[]): InformationValues {
+  return fields.reduce<InformationValues>((acc, field) => {
+    acc[field.name] = []
+    return acc
+  }, {})
+}
+
+function getInformationInputType(field: FieldResponse) {
+  if (field.fieldType === 'MOBILE') {
+    return 'tel'
+  }
+  return 'text'
+}
+
+function toInformationPayload(fields: FieldResponse[], values: InformationValues): InformationRequest[] {
+  return fields.map((field) => ({
+    name: field.name,
+    values: values[field.name]?.map((value) => value.trim()).filter(Boolean) ?? [],
+  }))
+}
+
+function getRequiredMissingField(fields: FieldResponse[], values: InformationValues) {
+  return fields.find((field) => {
+    if (!field.required) {
+      return false
+    }
+    return (values[field.name] ?? []).every((value) => value.trim() === '')
+  })
 }
 
 function ComeCard({
@@ -122,6 +167,13 @@ function ComeDetail({
   applyStatusMessage,
   applyLoading,
   applyMessage,
+  fields,
+  informationValues,
+  informationLoading,
+  informationSubmitting,
+  informationMessage,
+  onInformationChange,
+  onSubmitInformation,
   onApply,
   onBack,
   onRefresh,
@@ -132,6 +184,13 @@ function ComeDetail({
   applyStatusMessage: string | null
   applyLoading: boolean
   applyMessage: string | null
+  fields: FieldResponse[] | null
+  informationValues: InformationValues
+  informationLoading: boolean
+  informationSubmitting: boolean
+  informationMessage: string | null
+  onInformationChange: (name: string, values: string[]) => void
+  onSubmitInformation: () => void
   onApply: () => void
   onBack: () => void
   onRefresh: () => void
@@ -218,6 +277,113 @@ function ComeDetail({
         )}
       </section>
 
+      {alreadyApplied && (
+        <section className="come-detail__information">
+          <div className="come-detail__section-head">
+            <h3>정보 입력</h3>
+            <span>신청 완료자 전용</span>
+          </div>
+          {informationLoading ? (
+            <p className="come-detail__notice">입력 항목을 불러오는 중입니다.</p>
+          ) : fields && fields.length > 0 ? (
+            <form
+              className="come-form"
+              onSubmit={(e) => {
+                e.preventDefault()
+                onSubmitInformation()
+              }}
+            >
+              {fields.map((field) => {
+                const currentValues = informationValues[field.name] ?? []
+
+                if (field.fieldType === 'SINGLE_DOMAIN') {
+                  return (
+                    <label className="come-form__field" key={field.name}>
+                      <span>
+                        {field.name}
+                        {field.required && <strong>필수</strong>}
+                      </span>
+                      <select
+                        value={currentValues[0] ?? ''}
+                        required={field.required}
+                        onChange={(e) => onInformationChange(field.name, [e.target.value])}
+                      >
+                        <option value="">선택</option>
+                        {(field.domain ?? []).map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )
+                }
+
+                if (field.fieldType === 'MULTIPLE_DOMAIN') {
+                  return (
+                    <fieldset className="come-form__field come-form__field--options" key={field.name}>
+                      <legend>
+                        {field.name}
+                        {field.required && <strong>필수</strong>}
+                      </legend>
+                      <div>
+                        {(field.domain ?? []).map((value) => (
+                          <label key={value}>
+                            <input
+                              type="checkbox"
+                              checked={currentValues.includes(value)}
+                              onChange={(e) => {
+                                const nextValues = e.target.checked
+                                  ? [...currentValues, value]
+                                  : currentValues.filter((item) => item !== value)
+                                onInformationChange(field.name, nextValues)
+                              }}
+                            />
+                            {value}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )
+                }
+
+                return (
+                  <label className="come-form__field" key={field.name}>
+                    <span>
+                      {field.name}
+                      {field.required && <strong>필수</strong>}
+                    </span>
+                    <input
+                      type={getInformationInputType(field)}
+                      value={currentValues[0] ?? ''}
+                      required={field.required}
+                      placeholder={field.dataSource?.name ?? ''}
+                      onChange={(e) => onInformationChange(field.name, [e.target.value])}
+                    />
+                  </label>
+                )
+              })}
+              <div className="come-form__actions">
+                <button
+                  type="submit"
+                  className="home__button home__button--primary"
+                  disabled={informationSubmitting}
+                >
+                  {informationSubmitting ? '저장 중...' : '정보 입력 완료'}
+                </button>
+                {informationMessage && (
+                  <p className="come-detail__notice" role="status">
+                    {informationMessage}
+                  </p>
+                )}
+              </div>
+            </form>
+          ) : (
+            <p className="come-detail__notice">입력할 추가 정보가 없습니다.</p>
+          )}
+        </section>
+      )}
+
       <dl className="come-detail__grid">
         <div>
           <dt>신청 인원</dt>
@@ -294,6 +460,11 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null)
   const [tokens, setTokens] = useState<TokenResponse | null>(() => readStoredTokens())
   const [member, setMember] = useState<MemberResponse | null>(null)
+  const [fields, setFields] = useState<FieldResponse[] | null>(null)
+  const [informationValues, setInformationValues] = useState<InformationValues>({})
+  const [informationLoading, setInformationLoading] = useState(false)
+  const [informationSubmitting, setInformationSubmitting] = useState(false)
+  const [informationMessage, setInformationMessage] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -330,6 +501,9 @@ export default function App() {
     setApplyStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
+    setFields(null)
+    setInformationValues({})
+    setInformationMessage(null)
     setSelectedComeId(comeId)
   }, [])
 
@@ -341,6 +515,9 @@ export default function App() {
     setApplyStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
+    setFields(null)
+    setInformationValues({})
+    setInformationMessage(null)
   }, [])
 
   const loadDetail = useCallback(async (comeId: string) => {
@@ -386,6 +563,9 @@ export default function App() {
     setAuthError(null)
     setApplyStatus('idle')
     setApplyStatusMessage(null)
+    setFields(null)
+    setInformationValues({})
+    setInformationMessage(null)
   }, [])
 
   const checkApplyStatus = useCallback(
@@ -446,11 +626,126 @@ export default function App() {
     if (!tokens) {
       setApplyStatus('idle')
       setApplyStatusMessage(null)
+      setFields(null)
+      setInformationValues({})
+      setInformationMessage(null)
       return
     }
 
     void checkApplyStatus(selectedComeId, tokens)
   }, [checkApplyStatus, selectedComeId, tokens])
+
+  const loadInformationFields = useCallback(
+    async (comeId: string, currentTokens: TokenResponse) => {
+      setInformationLoading(true)
+      setInformationMessage(null)
+
+      try {
+        const nextFields = await fetchFields(comeId, currentTokens.accessToken)
+        setFields(nextFields)
+        setInformationValues(createInitialInformationValues(nextFields))
+      } catch (e) {
+        if (isExpiredTokenError(e)) {
+          try {
+            const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+            storeTokens(refreshedTokens)
+            setTokens(refreshedTokens)
+            const nextFields = await fetchFields(comeId, refreshedTokens.accessToken)
+            setFields(nextFields)
+            setInformationValues(createInitialInformationValues(nextFields))
+            return
+          } catch (refreshError) {
+            clearTokens()
+            setTokens(null)
+            setMember(null)
+            setFields(null)
+            setInformationValues({})
+            setInformationMessage(
+              refreshError instanceof Error
+                ? refreshError.message
+                : '입력 항목을 불러오지 못했습니다.',
+            )
+            return
+          }
+        }
+
+        setFields(null)
+        setInformationValues({})
+        setInformationMessage(e instanceof Error ? e.message : '입력 항목을 불러오지 못했습니다.')
+      } finally {
+        setInformationLoading(false)
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (!selectedComeId || !tokens || applyStatus !== 'applied') {
+      if (applyStatus !== 'applied') {
+        setFields(null)
+        setInformationValues({})
+      }
+      return
+    }
+
+    void loadInformationFields(selectedComeId, tokens)
+  }, [applyStatus, loadInformationFields, selectedComeId, tokens])
+
+  const updateInformationValue = useCallback((name: string, values: string[]) => {
+    setInformationValues((current) => ({
+      ...current,
+      [name]: values,
+    }))
+  }, [])
+
+  const submitSelectedInformation = useCallback(async () => {
+    if (!selectedCome || !tokens || !fields) {
+      return
+    }
+
+    const missingField = getRequiredMissingField(fields, informationValues)
+    if (missingField) {
+      setInformationMessage(`${missingField.name} 항목을 입력해주세요.`)
+      return
+    }
+
+    setInformationSubmitting(true)
+    setInformationMessage(null)
+
+    let currentTokens = tokens
+    const payload = {
+      informations: toInformationPayload(fields, informationValues),
+    }
+
+    try {
+      await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
+      setInformationMessage('정보 입력이 완료되었습니다.')
+    } catch (e) {
+      if (isExpiredTokenError(e)) {
+        try {
+          const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+          storeTokens(refreshedTokens)
+          setTokens(refreshedTokens)
+          currentTokens = refreshedTokens
+          await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
+          setInformationMessage('정보 입력이 완료되었습니다.')
+          return
+        } catch (refreshError) {
+          clearTokens()
+          setTokens(null)
+          setMember(null)
+          setInformationMessage(
+            refreshError instanceof Error ? refreshError.message : '정보 입력에 실패했습니다.',
+          )
+          return
+        }
+      }
+
+      setInformationMessage(e instanceof Error ? e.message : '정보 입력에 실패했습니다.')
+    } finally {
+      setInformationSubmitting(false)
+    }
+  }, [fields, informationValues, selectedCome, tokens])
 
   const applySelectedCome = useCallback(async () => {
     if (!selectedCome) {
@@ -673,6 +968,13 @@ export default function App() {
                 applyStatusMessage={applyStatusMessage}
                 applyLoading={applyLoading}
                 applyMessage={applyMessage}
+                fields={fields}
+                informationValues={informationValues}
+                informationLoading={informationLoading}
+                informationSubmitting={informationSubmitting}
+                informationMessage={informationMessage}
+                onInformationChange={updateInformationValue}
+                onSubmitInformation={submitSelectedInformation}
                 onApply={() => void applySelectedCome()}
                 onBack={closeDetail}
                 onRefresh={() => void loadDetail(selectedCome.id)}

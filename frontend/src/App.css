@@ -344,6 +344,106 @@
   padding-top: 1rem;
 }
 
+.come-detail__information {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.come-detail__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.come-detail__section-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.come-detail__section-head span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.come-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.come-form__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.come-form__field span,
+.come-form__field legend {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.come-form__field strong {
+  margin-left: 0.35rem;
+  color: var(--success);
+  font-size: 0.72rem;
+}
+
+.come-form__field input,
+.come-form__field select {
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: var(--surface);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.come-form__field--options {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.come-form__field--options div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.come-form__field--options label {
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  background: var(--surface-strong);
+  color: var(--text-h);
+  font-size: 0.88rem;
+}
+
+.come-form__field--options input {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+}
+
+.come-form__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding-top: 0.25rem;
+}
+
 .come-detail__schedule h3 {
   margin: 0 0 0.75rem;
   color: var(--text);
@@ -440,6 +540,10 @@
   }
 
   .come-detail__apply {
+    width: 100%;
+  }
+
+  .come-form__actions .home__button {
     width: 100%;
   }
 }

@@ -1,5 +1,11 @@
 import { ApiError } from './auth'
-import type { AppliedEventResponse, ErrorResponse, FirstComeResponse } from './types'
+import type {
+  AppliedEventResponse,
+  ErrorResponse,
+  FieldResponse,
+  FirstComeResponse,
+  InformationsRequest,
+} from './types'
 
 async function readError(res: Response, fallbackMessage: string): Promise<ApiError> {
   try {
@@ -51,4 +57,37 @@ export async function fetchApplyFor(
     throw await readError(res, `신청 결과 요청 실패 (${res.status})`)
   }
   return res.json() as Promise<AppliedEventResponse>
+}
+
+export async function fetchFields(
+  comeId: string,
+  accessToken: string,
+): Promise<FieldResponse[]> {
+  const res = await fetch(`/v1/comes/${encodeURIComponent(comeId)}/fields`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  if (!res.ok) {
+    throw await readError(res, `정보 입력 항목 요청 실패 (${res.status})`)
+  }
+  return res.json() as Promise<FieldResponse[]>
+}
+
+export async function submitInformation(
+  comeId: string,
+  accessToken: string,
+  payload: InformationsRequest,
+): Promise<void> {
+  const res = await fetch(`/v1/comes/${encodeURIComponent(comeId)}/information`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw await readError(res, `정보 입력 실패 (${res.status})`)
+  }
 }

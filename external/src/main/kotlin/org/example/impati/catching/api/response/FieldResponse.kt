@@ -5,6 +5,7 @@ import org.example.impati.catching.field.*
 data class FieldResponse(
     val name: String,
     val fieldType: FieldType,
+    val required: Boolean,
     val dataSource: Datasource? = null,
     val domain: List<String>? = listOf()
 ) {
@@ -18,6 +19,7 @@ data class FieldResponse(
             return FieldResponse(
                 name = field.name,
                 fieldType = field.type,
+                required = field.required,
                 dataSource = dataSource,
                 domain = domain
             )

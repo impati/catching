@@ -13,7 +13,6 @@ CREATE TABLE field
     field_type      VARCHAR(255) NOT NULL,
     required        BIT          NOT NULL,
     datasource_name VARCHAR(255) NULL,
-    first_come_id   VARCHAR(255) NULL,
     domain          TEXT         NOT NULL,
     PRIMARY KEY (name)
 );
@@ -32,6 +31,7 @@ CREATE TABLE first_come
     join_method   VARCHAR(255) NOT NULL,
     wait_type     VARCHAR(255) NOT NULL,
     wait_capacity INT          NULL,
+    fields        TEXT         NOT NULL,
     organizer     VARCHAR(255) NOT NULL,
     PRIMARY KEY (id)
 );

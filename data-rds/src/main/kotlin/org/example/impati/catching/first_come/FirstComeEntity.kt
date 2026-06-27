@@ -1,7 +1,8 @@
 package org.example.impati.catching.first_come
 
-import org.example.impati.catching.field.FieldEntity
 import jakarta.persistence.*
+import org.example.impati.catching.field.Field
+import org.example.impati.catching.field.StringListConverter
 import java.time.LocalDateTime
 
 @Entity
@@ -47,13 +48,12 @@ class FirstComeEntity(
     @Column(name = "wait_capacity")
     var waitCapacity: Int?,
 
+    @Convert(converter = StringListConverter::class)
+    @Column(name = "fields", nullable = false, columnDefinition = "TEXT")
+    var fields: List<String> = emptyList(),
+
     @Column(name = "organizer", nullable = false)
-    var organizer: String,
-
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn(name = "first_come_id")
-    var fields: MutableList<FieldEntity> = mutableListOf(),
-
+    var organizer: String
 ) {
 
     companion object {
@@ -71,6 +71,7 @@ class FirstComeEntity(
                 joinMethod = createdFirstCome.join.method,
                 waitType = createdFirstCome.waitPolicy.waitType,
                 waitCapacity = createdFirstCome.waitPolicy.capacity,
+                fields = createdFirstCome.fields.map { it.name },
                 organizer = createdFirstCome.organizer.value
             )
         }
@@ -89,12 +90,13 @@ class FirstComeEntity(
                 joinMethod = createdFirstCome.join.method,
                 waitType = createdFirstCome.waitPolicy.waitType,
                 waitCapacity = createdFirstCome.waitPolicy.capacity,
+                fields = createdFirstCome.fields.map { it.name },
                 organizer = createdFirstCome.organizer.value
             )
         }
     }
 
-    fun toCreated(): CreatedFirstCome {
+    fun toCreated(fields: List<Field>): CreatedFirstCome {
         check(!approved) { "already approved" }
 
         return CreatedFirstCome(
@@ -117,12 +119,12 @@ class FirstComeEntity(
                 waitType = waitType,
                 capacity = waitCapacity
             ),
-            fields = fields.map { it.toDomain() },
+            fields = fields,
             organizer = Organizer(organizer)
         )
     }
 
-    fun toApproved(): ApprovedFirstCome {
+    fun toApproved(fields: List<Field>): ApprovedFirstCome {
         check(approved) { "must be approved" }
 
         return ApprovedFirstCome(
@@ -145,12 +147,15 @@ class FirstComeEntity(
                 waitType = waitType,
                 capacity = waitCapacity
             ),
-            fields = fields.map { it.toDomain() },
+            fields = fields,
             organizer = Organizer(organizer)
         )
     }
 
-    fun toActive(now: LocalDateTime): ActiveFirstCome {
-        return toApproved().toActive(now)
+    fun toActive(
+        now: LocalDateTime,
+        fields: List<Field>
+    ): ActiveFirstCome {
+        return toApproved(fields).toActive(now)
     }
 }

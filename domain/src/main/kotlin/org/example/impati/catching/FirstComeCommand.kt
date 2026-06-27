@@ -1,5 +1,6 @@
 package org.example.impati.catching
 
+import org.example.impati.catching.field.FieldRepository
 import org.example.impati.catching.first_come.ApprovedFirstCome
 import org.example.impati.catching.first_come.CreatedFirstCome
 import org.example.impati.catching.first_come.FirstComeInputVo
@@ -9,11 +10,13 @@ import java.util.*
 
 @Component
 class FirstComeCommand(
-    val firstComeRepository: FirstComeRepository
+    val firstComeRepository: FirstComeRepository,
+    val fieldRepository: FieldRepository
 ) {
 
     fun create(input: FirstComeInputVo): CreatedFirstCome {
         val id = UUID.randomUUID().toString().substring(0, 7);
+        val field = input.fields.map { fieldRepository.findByField(it) }
 
         val createdFirstCome = firstComeRepository.save(
             CreatedFirstCome(
@@ -24,7 +27,7 @@ class FirstComeCommand(
                 input.eligibility,
                 input.join,
                 input.waitPolicy,
-                input.fields,
+                field,
                 input.organizer
             )
         )
