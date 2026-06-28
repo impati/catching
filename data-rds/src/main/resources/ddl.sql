@@ -79,3 +79,18 @@ CREATE TABLE applied_member_information
     information_values TEXT         NOT NULL,
     PRIMARY KEY (id)
 );
+
+CREATE TABLE terms
+(
+    id      VARCHAR(255) NOT NULL,
+    title   VARCHAR(255) NOT NULL,
+    content TEXT         NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE terms_group
+(
+    type      VARCHAR(255) NOT NULL,
+    terms_ids TEXT         NOT NULL,
+    PRIMARY KEY (type)
+);
