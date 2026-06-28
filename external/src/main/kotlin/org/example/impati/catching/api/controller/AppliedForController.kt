@@ -3,8 +3,10 @@ package org.example.impati.catching.api.controller
 import org.example.impati.catching.*
 import org.example.impati.catching.api.request.InformationsRequest
 import org.example.impati.catching.api.response.AppliedEventResponse
+import org.example.impati.catching.api.response.AppliedMemberResponse
 import org.example.impati.catching.api.response.FieldResponse
 import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
+import org.example.impati.catching.applied_member.exception.NotFoundAppliedMemberException
 import org.example.impati.catching.field.Information
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -16,6 +18,7 @@ import java.time.LocalDateTime
 class AppliedForController(
     private val appliedEventCommand: AppliedEventCommand,
     private val appliedMemberCommand: AppliedMemberCommand,
+    private val appliedMemberQuery: AppliedMemberQuery,
     private val appliedEventQuery: AppliedEventQuery,
     private val firstComeQuery: FirstComeQuery,
     private val memberQuery: MemberQuery
@@ -60,11 +63,31 @@ class AppliedForController(
     ): List<FieldResponse> {
         val member = memberQuery.getMember(authorization);
         val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
-        if (appliedEventQuery.findAppliedEvent(firstCome, member) == null) {
+        if (appliedEventQuery.notExist(firstCome, member)) {
             throw NotFoundAppliedEvent()
         }
 
         return firstCome.fields.map { FieldResponse.from(it) }
+    }
+
+    /**
+     * 선착순 신청 - 2단계, 정보 입력 결과
+     */
+    @GetMapping("/v1/comes/{comeId}/information")
+    fun getInformation(
+        @PathVariable comeId: String,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String
+    ): AppliedMemberResponse {
+        val member = memberQuery.getMember(authorization);
+        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        if (appliedEventQuery.notExist(firstCome, member)) {
+            throw NotFoundAppliedEvent()
+        }
+        if (appliedMemberQuery.notExists(firstCome, member)) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Information not found")
+        }
+
+        return AppliedMemberResponse.from(appliedMemberQuery.getAppliedMember(firstCome, member))
     }
 
     /**
@@ -78,11 +101,39 @@ class AppliedForController(
     ) {
         val member = memberQuery.getMember(authorization);
         val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
-        if (appliedEventQuery.findAppliedEvent(firstCome, member) == null) {
+        if (appliedEventQuery.notExist(firstCome, member)) {
             throw NotFoundAppliedEvent()
+        }
+        if (appliedMemberQuery.exists(firstCome, member)) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "already exists")
         }
 
         appliedMemberCommand.create(
+            firstCome,
+            member,
+            request.informations.map { Information(it.name, it.values) }
+        )
+    }
+
+    /**
+     * 선착순 신청 - 2단계, 정보 수정
+     */
+    @PutMapping("/v1/comes/{comeId}/information")
+    fun updateInformation(
+        @PathVariable comeId: String,
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+        @RequestBody request: InformationsRequest
+    ) {
+        val member = memberQuery.getMember(authorization);
+        val firstCome = firstComeQuery.findById(comeId, LocalDateTime.now())
+        if (appliedEventQuery.notExist(firstCome, member)) {
+            throw NotFoundAppliedEvent()
+        }
+        if (appliedMemberQuery.notExists(firstCome, member)) {
+            throw NotFoundAppliedMemberException()
+        }
+
+        appliedMemberCommand.edit(
             firstCome,
             member,
             request.informations.map { Information(it.name, it.values) }

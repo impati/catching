@@ -1,6 +1,7 @@
 import { ApiError } from './auth'
 import type {
   AppliedEventResponse,
+  AppliedMemberResponse,
   ErrorResponse,
   FieldResponse,
   FirstComeResponse,
@@ -89,5 +90,38 @@ export async function submitInformation(
   })
   if (!res.ok) {
     throw await readError(res, `정보 입력 실패 (${res.status})`)
+  }
+}
+
+export async function fetchInformation(
+  comeId: string,
+  accessToken: string,
+): Promise<AppliedMemberResponse> {
+  const res = await fetch(`/v1/comes/${encodeURIComponent(comeId)}/information`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  if (!res.ok) {
+    throw await readError(res, `정보 입력 결과 요청 실패 (${res.status})`)
+  }
+  return res.json() as Promise<AppliedMemberResponse>
+}
+
+export async function updateInformation(
+  comeId: string,
+  accessToken: string,
+  payload: InformationsRequest,
+): Promise<void> {
+  const res = await fetch(`/v1/comes/${encodeURIComponent(comeId)}/information`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw await readError(res, `정보 수정 실패 (${res.status})`)
   }
 }

@@ -70,6 +70,12 @@ export interface InformationsRequest {
   informations: InformationRequest[]
 }
 
+export interface AppliedMemberResponse {
+  firstComeId: string
+  memberId: string
+  informations: InformationRequest[]
+}
+
 export type AuthMode = 'login' | 'signup'
 
 export interface AuthUrlResponse {

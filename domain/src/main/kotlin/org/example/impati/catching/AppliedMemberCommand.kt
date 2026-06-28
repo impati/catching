@@ -16,12 +16,7 @@ class AppliedMemberCommand(
 ) {
 
     fun create(firstCome: FirstCome, member: Member, informations: List<Information>): AppliedMember {
-        informations.forEach {
-            val field = fieldRepository.findByField(it.name)
-            if (field.required && it.values.isEmpty()) {
-                throw RequiredFieldException()
-            }
-        }
+        validate(informations)
 
         return appliedMemberRepository.save(
             AppliedMember(
@@ -30,5 +25,26 @@ class AppliedMemberCommand(
                 informations
             )
         )
+    }
+
+    fun edit(firstCome: FirstCome, member: Member, informations: List<Information>): AppliedMember {
+        validate(informations)
+
+        return appliedMemberRepository.update(
+            AppliedMember(
+                firstCome.id,
+                member.id,
+                informations
+            )
+        )
+    }
+
+    private fun validate(informations: List<Information>) {
+        informations.forEach {
+            val field = fieldRepository.findByField(it.name)
+            if (field.required && it.values.isEmpty()) {
+                throw RequiredFieldException()
+            }
+        }
     }
 }

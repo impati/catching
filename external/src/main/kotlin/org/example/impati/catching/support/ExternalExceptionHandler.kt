@@ -1,5 +1,7 @@
 package org.example.impati.catching.support
 
+import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
+import org.example.impati.catching.applied_member.exception.NotFoundAppliedMemberException
 import org.example.impati.catching.auth.exception.ExpiredTokenException
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -17,5 +19,14 @@ class ExternalExceptionHandler {
             e.message!!,
             e.code
         );
+    }
+
+    @ExceptionHandler(NotFoundAppliedEvent::class, NotFoundAppliedMemberException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun notFoundExceptionHandle(e: RuntimeException): ErrorResponse {
+        return ErrorResponse(
+            e.message ?: "not found",
+            ErrorCode.NOT_FOUND
+        )
     }
 }

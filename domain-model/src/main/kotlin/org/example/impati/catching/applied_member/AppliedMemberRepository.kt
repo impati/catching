@@ -7,5 +7,9 @@ interface AppliedMemberRepository {
 
     fun save(appliedMember: AppliedMember): AppliedMember
 
-    fun findBy(member: Member, firstCome: FirstCome): AppliedMember
+    fun update(appliedMember: AppliedMember): AppliedMember
+
+    fun exists(member: Member, firstCome: FirstCome): Boolean
+
+    fun findBy(member: Member, firstCome: FirstCome): AppliedMember?
 }

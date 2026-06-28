@@ -17,10 +17,30 @@
 
 .home__title {
   margin: 0 0 0.25rem;
+}
+
+.home__title-button {
+  display: inline-flex;
+  border: 0;
+  padding: 0;
+  background: transparent;
   color: var(--text-h);
+  font-family: var(--sans);
   font-size: 2rem;
+  font-weight: 750;
   line-height: 1.15;
   letter-spacing: 0;
+  cursor: pointer;
+}
+
+.home__title-button:hover {
+  color: var(--action);
+}
+
+.home__title-button:focus-visible {
+  outline: 3px solid var(--info-border);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
 .home__lead {
@@ -245,6 +265,34 @@
   padding: 1.25rem;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.come-flow {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.come-flow__head {
+  padding: 0.4rem 0 1rem;
+}
+
+.come-flow__empty {
+  display: grid;
+  justify-items: flex-start;
+  gap: 0.85rem;
+}
+
+.come-flow--complete {
+  display: grid;
+  justify-items: flex-start;
+  gap: 0.65rem;
+}
+
+.come-flow__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
 }
 
 .come-detail__nav,

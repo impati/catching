@@ -8,4 +8,9 @@ interface AppliedMemberEntityRepository : JpaRepository<AppliedMemberEntity, Str
         firstComeId: String,
         memberId: String,
     ): AppliedMemberEntity?
+
+    fun existsByFirstComeIdAndMemberId(
+        firstComeId: String,
+        memberId: String,
+    ): Boolean
 }

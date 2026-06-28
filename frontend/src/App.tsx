@@ -16,7 +16,9 @@ import {
   fetchComeDetail,
   fetchComes,
   fetchFields,
+  fetchInformation,
   submitInformation,
+  updateInformation,
 } from './api/comes'
 import type {
   AuthMode,
@@ -31,10 +33,20 @@ import './App.css'
 const callbackTokenRequests = new Map<string, Promise<TokenResponse>>()
 
 type ApplyStatus = 'idle' | 'checking' | 'applied' | 'not_applied' | 'unknown'
+type InformationStatus = 'idle' | 'checking' | 'completed' | 'not_completed' | 'unknown'
 type InformationValues = Record<string, string[]>
+type PageStep = 'detail' | 'information' | 'complete' | 'edit'
 
 function readComeIdFromUrl() {
   return new URLSearchParams(window.location.search).get('comeId')
+}
+
+function readStepFromUrl(): PageStep {
+  const step = new URLSearchParams(window.location.search).get('step')
+  if (step === 'information' || step === 'complete' || step === 'edit') {
+    return step
+  }
+  return 'detail'
 }
 
 function formatDt(iso: string) {
@@ -64,6 +76,10 @@ function isNotAppliedError(error: unknown) {
   )
 }
 
+function isAlreadyCompletedError(error: unknown) {
+  return error instanceof ApiError && error.status === 409
+}
+
 function getStatusLabel(status: string) {
   if (status === 'ACTIVE') {
     return '신청 가능'
@@ -83,6 +99,17 @@ function createInitialInformationValues(fields: FieldResponse[]): InformationVal
     acc[field.name] = []
     return acc
   }, {})
+}
+
+function createInformationValues(
+  fields: FieldResponse[],
+  informations: InformationRequest[],
+): InformationValues {
+  const values = createInitialInformationValues(fields)
+  informations.forEach((information) => {
+    values[information.name] = information.values
+  })
+  return values
 }
 
 function getInformationInputType(field: FieldResponse) {
@@ -164,34 +191,24 @@ function ComeDetail({
   item,
   isLoggedIn,
   applyStatus,
+  informationStatus,
   applyStatusMessage,
   applyLoading,
   applyMessage,
-  fields,
-  informationValues,
-  informationLoading,
-  informationSubmitting,
-  informationMessage,
-  onInformationChange,
-  onSubmitInformation,
   onApply,
+  onStartInformation,
   onBack,
   onRefresh,
 }: {
   item: FirstComeResponse
   isLoggedIn: boolean
   applyStatus: ApplyStatus
+  informationStatus: InformationStatus
   applyStatusMessage: string | null
   applyLoading: boolean
   applyMessage: string | null
-  fields: FieldResponse[] | null
-  informationValues: InformationValues
-  informationLoading: boolean
-  informationSubmitting: boolean
-  informationMessage: string | null
-  onInformationChange: (name: string, values: string[]) => void
-  onSubmitInformation: () => void
   onApply: () => void
+  onStartInformation: () => void
   onBack: () => void
   onRefresh: () => void
 }) {
@@ -270,119 +287,22 @@ function ComeDetail({
                   ? '신청하기'
                   : '로그인 후 신청'}
           </button>
+        ) : alreadyApplied && informationStatus === 'completed' ? (
+          <p className="come-detail__notice come-detail__notice--success">정보 입력 완료</p>
+        ) : alreadyApplied && informationStatus === 'checking' ? (
+          <p className="come-detail__notice">정보 입력 여부를 확인하는 중입니다.</p>
         ) : alreadyApplied ? (
-          <p className="come-detail__notice come-detail__notice--success">신청 완료</p>
+          <button
+            type="button"
+            className="home__button home__button--primary come-detail__apply"
+            onClick={onStartInformation}
+          >
+            정보 입력하기
+          </button>
         ) : (
           <p className="come-detail__notice">{applyUnavailableMessage}</p>
         )}
       </section>
-
-      {alreadyApplied && (
-        <section className="come-detail__information">
-          <div className="come-detail__section-head">
-            <h3>정보 입력</h3>
-            <span>신청 완료자 전용</span>
-          </div>
-          {informationLoading ? (
-            <p className="come-detail__notice">입력 항목을 불러오는 중입니다.</p>
-          ) : fields && fields.length > 0 ? (
-            <form
-              className="come-form"
-              onSubmit={(e) => {
-                e.preventDefault()
-                onSubmitInformation()
-              }}
-            >
-              {fields.map((field) => {
-                const currentValues = informationValues[field.name] ?? []
-
-                if (field.fieldType === 'SINGLE_DOMAIN') {
-                  return (
-                    <label className="come-form__field" key={field.name}>
-                      <span>
-                        {field.name}
-                        {field.required && <strong>필수</strong>}
-                      </span>
-                      <select
-                        value={currentValues[0] ?? ''}
-                        required={field.required}
-                        onChange={(e) => onInformationChange(field.name, [e.target.value])}
-                      >
-                        <option value="">선택</option>
-                        {(field.domain ?? []).map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )
-                }
-
-                if (field.fieldType === 'MULTIPLE_DOMAIN') {
-                  return (
-                    <fieldset className="come-form__field come-form__field--options" key={field.name}>
-                      <legend>
-                        {field.name}
-                        {field.required && <strong>필수</strong>}
-                      </legend>
-                      <div>
-                        {(field.domain ?? []).map((value) => (
-                          <label key={value}>
-                            <input
-                              type="checkbox"
-                              checked={currentValues.includes(value)}
-                              onChange={(e) => {
-                                const nextValues = e.target.checked
-                                  ? [...currentValues, value]
-                                  : currentValues.filter((item) => item !== value)
-                                onInformationChange(field.name, nextValues)
-                              }}
-                            />
-                            {value}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                  )
-                }
-
-                return (
-                  <label className="come-form__field" key={field.name}>
-                    <span>
-                      {field.name}
-                      {field.required && <strong>필수</strong>}
-                    </span>
-                    <input
-                      type={getInformationInputType(field)}
-                      value={currentValues[0] ?? ''}
-                      required={field.required}
-                      placeholder={field.dataSource?.name ?? ''}
-                      onChange={(e) => onInformationChange(field.name, [e.target.value])}
-                    />
-                  </label>
-                )
-              })}
-              <div className="come-form__actions">
-                <button
-                  type="submit"
-                  className="home__button home__button--primary"
-                  disabled={informationSubmitting}
-                >
-                  {informationSubmitting ? '저장 중...' : '정보 입력 완료'}
-                </button>
-                {informationMessage && (
-                  <p className="come-detail__notice" role="status">
-                    {informationMessage}
-                  </p>
-                )}
-              </div>
-            </form>
-          ) : (
-            <p className="come-detail__notice">입력할 추가 정보가 없습니다.</p>
-          )}
-        </section>
-      )}
 
       <dl className="come-detail__grid">
         <div>
@@ -444,13 +364,202 @@ function ComeDetail({
   )
 }
 
+function InformationStep({
+  item,
+  mode,
+  fields,
+  informationValues,
+  informationLoading,
+  informationSubmitting,
+  informationMessage,
+  onInformationChange,
+  onSubmitInformation,
+  onBack,
+}: {
+  item: FirstComeResponse
+  mode: 'create' | 'edit'
+  fields: FieldResponse[] | null
+  informationValues: InformationValues
+  informationLoading: boolean
+  informationSubmitting: boolean
+  informationMessage: string | null
+  onInformationChange: (name: string, values: string[]) => void
+  onSubmitInformation: () => void
+  onBack: () => void
+}) {
+  const isEdit = mode === 'edit'
+
+  return (
+    <article className="come-detail come-flow">
+      <div className="come-detail__nav">
+        <button type="button" className="home__button" onClick={onBack}>
+          상세
+        </button>
+      </div>
+
+      <header className="come-flow__head">
+        <span className="come-status come-status--active">신청 완료</span>
+        <h2 className="come-detail__title">{item.name}</h2>
+        <p className="come-detail__sub">{item.organizer}</p>
+      </header>
+
+      <section className="come-detail__information">
+        <div className="come-detail__section-head">
+          <h3>{isEdit ? '정보 수정' : '정보 입력'}</h3>
+          <span>{isEdit ? '수정 전용' : '마지막 단계'}</span>
+        </div>
+        {informationLoading ? (
+          <p className="come-detail__notice">입력 항목을 불러오는 중입니다.</p>
+        ) : fields === null ? (
+          <p className="come-detail__notice">
+            {informationMessage ?? '입력 항목을 불러오지 못했습니다.'}
+          </p>
+        ) : fields.length > 0 ? (
+          <form
+            className="come-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              onSubmitInformation()
+            }}
+          >
+            {fields.map((field) => {
+              const currentValues = informationValues[field.name] ?? []
+
+              if (field.fieldType === 'SINGLE_DOMAIN') {
+                return (
+                  <label className="come-form__field" key={field.name}>
+                    <span>
+                      {field.name}
+                      {field.required && <strong>필수</strong>}
+                    </span>
+                    <select
+                      value={currentValues[0] ?? ''}
+                      required={field.required}
+                      onChange={(e) => onInformationChange(field.name, [e.target.value])}
+                    >
+                      <option value="">선택</option>
+                      {(field.domain ?? []).map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )
+              }
+
+              if (field.fieldType === 'MULTIPLE_DOMAIN') {
+                return (
+                  <fieldset className="come-form__field come-form__field--options" key={field.name}>
+                    <legend>
+                      {field.name}
+                      {field.required && <strong>필수</strong>}
+                    </legend>
+                    <div>
+                      {(field.domain ?? []).map((value) => (
+                        <label key={value}>
+                          <input
+                            type="checkbox"
+                            checked={currentValues.includes(value)}
+                            onChange={(e) => {
+                              const nextValues = e.target.checked
+                                ? [...currentValues, value]
+                                : currentValues.filter((item) => item !== value)
+                              onInformationChange(field.name, nextValues)
+                            }}
+                          />
+                          {value}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )
+              }
+
+              return (
+                <label className="come-form__field" key={field.name}>
+                  <span>
+                    {field.name}
+                    {field.required && <strong>필수</strong>}
+                  </span>
+                  <input
+                    type={getInformationInputType(field)}
+                    value={currentValues[0] ?? ''}
+                    required={field.required}
+                    placeholder={field.dataSource?.name ?? ''}
+                    onChange={(e) => onInformationChange(field.name, [e.target.value])}
+                  />
+                </label>
+              )
+            })}
+            <div className="come-form__actions">
+              <button
+                type="submit"
+                className="home__button home__button--primary"
+                disabled={informationSubmitting}
+              >
+                {informationSubmitting ? '저장 중...' : isEdit ? '정보 수정 완료' : '정보 입력 완료'}
+              </button>
+              {informationMessage && (
+                <p className="come-detail__notice" role="status">
+                  {informationMessage}
+                </p>
+              )}
+            </div>
+          </form>
+        ) : (
+          <div className="come-flow__empty">
+            <p className="come-detail__notice">입력할 추가 정보가 없습니다.</p>
+            <button type="button" className="home__button home__button--primary" onClick={onSubmitInformation}>
+              완료 화면으로 이동
+            </button>
+          </div>
+        )}
+      </section>
+    </article>
+  )
+}
+
+function CompleteStep({
+  item,
+  onHome,
+  onDetail,
+  onEdit,
+}: {
+  item: FirstComeResponse
+  onHome: () => void
+  onDetail: () => void
+  onEdit: () => void
+}) {
+  return (
+    <article className="come-detail come-flow come-flow--complete">
+      <span className="come-status come-status--active">신청 완료</span>
+      <h2 className="come-detail__title">{item.name}</h2>
+      <p className="come-detail__sub">정보 입력까지 완료되었습니다.</p>
+      <div className="come-flow__actions">
+        <button type="button" className="home__button home__button--primary" onClick={onHome}>
+          홈으로
+        </button>
+        <button type="button" className="home__button" onClick={onEdit}>
+          정보 수정
+        </button>
+        <button type="button" className="home__button" onClick={onDetail}>
+          상세 보기
+        </button>
+      </div>
+    </article>
+  )
+}
+
 export default function App() {
   const [items, setItems] = useState<FirstComeResponse[] | null>(null)
   const [selectedComeId, setSelectedComeId] = useState<string | null>(() => readComeIdFromUrl())
+  const [step, setStep] = useState<PageStep>(() => readStepFromUrl())
   const [selectedCome, setSelectedCome] = useState<FirstComeResponse | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [applyStatus, setApplyStatus] = useState<ApplyStatus>('idle')
+  const [informationStatus, setInformationStatus] = useState<InformationStatus>('idle')
   const [applyStatusMessage, setApplyStatusMessage] = useState<string | null>(null)
   const [applyLoading, setApplyLoading] = useState(false)
   const [applyMessage, setApplyMessage] = useState<string | null>(null)
@@ -486,6 +595,7 @@ export default function App() {
   useEffect(() => {
     function syncRoute() {
       setSelectedComeId(readComeIdFromUrl())
+      setStep(readStepFromUrl())
     }
 
     window.addEventListener('popstate', syncRoute)
@@ -494,25 +604,43 @@ export default function App() {
     }
   }, [])
 
+  const moveToStep = useCallback((comeId: string, nextStep: PageStep) => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('comeId', comeId)
+    if (nextStep === 'detail') {
+      params.delete('step')
+    } else {
+      params.set('step', nextStep)
+    }
+    window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`)
+    setSelectedComeId(comeId)
+    setStep(nextStep)
+  }, [])
+
   const openDetail = useCallback((comeId: string) => {
     const params = new URLSearchParams(window.location.search)
     params.set('comeId', comeId)
+    params.delete('step')
     window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`)
     setApplyStatus('idle')
+    setInformationStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
     setFields(null)
     setInformationValues({})
     setInformationMessage(null)
     setSelectedComeId(comeId)
+    setStep('detail')
   }, [])
 
   const closeDetail = useCallback(() => {
     window.history.pushState({}, '', window.location.pathname)
     setSelectedComeId(null)
+    setStep('detail')
     setSelectedCome(null)
     setDetailError(null)
     setApplyStatus('idle')
+    setInformationStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
     setFields(null)
@@ -540,6 +668,7 @@ export default function App() {
     }
 
     setApplyStatus(tokens ? 'checking' : 'idle')
+    setInformationStatus('idle')
     setApplyStatusMessage(null)
     void loadDetail(selectedComeId)
   }, [loadDetail, selectedComeId, tokens])
@@ -562,6 +691,7 @@ export default function App() {
     setMember(null)
     setAuthError(null)
     setApplyStatus('idle')
+    setInformationStatus('idle')
     setApplyStatusMessage(null)
     setFields(null)
     setInformationValues({})
@@ -625,6 +755,7 @@ export default function App() {
 
     if (!tokens) {
       setApplyStatus('idle')
+      setInformationStatus('idle')
       setApplyStatusMessage(null)
       setFields(null)
       setInformationValues({})
@@ -635,15 +766,92 @@ export default function App() {
     void checkApplyStatus(selectedComeId, tokens)
   }, [checkApplyStatus, selectedComeId, tokens])
 
+  const checkInformationStatus = useCallback(
+    async (comeId: string, currentTokens: TokenResponse): Promise<boolean> => {
+      setInformationStatus('checking')
+
+      async function check(accessToken: string) {
+        await fetchInformation(comeId, accessToken)
+      }
+
+      try {
+        await check(currentTokens.accessToken)
+        setInformationStatus('completed')
+        return true
+      } catch (e) {
+        if (isNotAppliedError(e)) {
+          setInformationStatus('not_completed')
+          return false
+        }
+
+        if (isExpiredTokenError(e)) {
+          try {
+            const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+            storeTokens(refreshedTokens)
+            setTokens(refreshedTokens)
+            await check(refreshedTokens.accessToken)
+            setInformationStatus('completed')
+            return true
+          } catch (refreshError) {
+            if (isNotAppliedError(refreshError)) {
+              setInformationStatus('not_completed')
+              return false
+            }
+
+            clearTokens()
+            setTokens(null)
+            setMember(null)
+            setInformationStatus('unknown')
+            return false
+          }
+        }
+
+        setInformationStatus('unknown')
+        return false
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (!selectedComeId || !tokens || applyStatus !== 'applied' || step !== 'detail') {
+      if (applyStatus !== 'applied') {
+        setInformationStatus('idle')
+      }
+      return
+    }
+
+    void checkInformationStatus(selectedComeId, tokens)
+  }, [applyStatus, checkInformationStatus, selectedComeId, step, tokens])
+
   const loadInformationFields = useCallback(
-    async (comeId: string, currentTokens: TokenResponse) => {
+    async (comeId: string, currentTokens: TokenResponse, mode: 'create' | 'edit') => {
       setInformationLoading(true)
       setInformationMessage(null)
 
       try {
         const nextFields = await fetchFields(comeId, currentTokens.accessToken)
+        if (mode === 'create') {
+          try {
+            await fetchInformation(comeId, currentTokens.accessToken)
+            setInformationStatus('completed')
+            moveToStep(comeId, 'complete')
+            return
+          } catch (e) {
+            if (!isNotAppliedError(e)) {
+              throw e
+            }
+          }
+        }
+
         setFields(nextFields)
-        setInformationValues(createInitialInformationValues(nextFields))
+        if (mode === 'edit') {
+          const appliedMember = await fetchInformation(comeId, currentTokens.accessToken)
+          setInformationStatus('completed')
+          setInformationValues(createInformationValues(nextFields, appliedMember.informations))
+        } else {
+          setInformationValues(createInitialInformationValues(nextFields))
+        }
       } catch (e) {
         if (isExpiredTokenError(e)) {
           try {
@@ -651,8 +859,27 @@ export default function App() {
             storeTokens(refreshedTokens)
             setTokens(refreshedTokens)
             const nextFields = await fetchFields(comeId, refreshedTokens.accessToken)
+            if (mode === 'create') {
+              try {
+                await fetchInformation(comeId, refreshedTokens.accessToken)
+                setInformationStatus('completed')
+                moveToStep(comeId, 'complete')
+                return
+              } catch (informationError) {
+                if (!isNotAppliedError(informationError)) {
+                  throw informationError
+                }
+              }
+            }
+
             setFields(nextFields)
-            setInformationValues(createInitialInformationValues(nextFields))
+            if (mode === 'edit') {
+              const appliedMember = await fetchInformation(comeId, refreshedTokens.accessToken)
+              setInformationStatus('completed')
+              setInformationValues(createInformationValues(nextFields, appliedMember.informations))
+            } else {
+              setInformationValues(createInitialInformationValues(nextFields))
+            }
             return
           } catch (refreshError) {
             clearTokens()
@@ -676,20 +903,25 @@ export default function App() {
         setInformationLoading(false)
       }
     },
-    [],
+    [moveToStep],
   )
 
   useEffect(() => {
-    if (!selectedComeId || !tokens || applyStatus !== 'applied') {
-      if (applyStatus !== 'applied') {
+    if (
+      !selectedComeId ||
+      !tokens ||
+      applyStatus !== 'applied' ||
+      (step !== 'information' && step !== 'edit')
+    ) {
+      if ((step !== 'information' && step !== 'edit') || applyStatus !== 'applied') {
         setFields(null)
         setInformationValues({})
       }
       return
     }
 
-    void loadInformationFields(selectedComeId, tokens)
-  }, [applyStatus, loadInformationFields, selectedComeId, tokens])
+    void loadInformationFields(selectedComeId, tokens, step === 'edit' ? 'edit' : 'create')
+  }, [applyStatus, loadInformationFields, selectedComeId, step, tokens])
 
   const updateInformationValue = useCallback((name: string, values: string[]) => {
     setInformationValues((current) => ({
@@ -718,19 +950,42 @@ export default function App() {
     }
 
     try {
-      await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
-      setInformationMessage('정보 입력이 완료되었습니다.')
+      if (step === 'edit') {
+        await updateInformation(selectedCome.id, currentTokens.accessToken, payload)
+      } else {
+        await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
+      }
+      setInformationStatus('completed')
+      moveToStep(selectedCome.id, 'complete')
     } catch (e) {
+      if (step !== 'edit' && isAlreadyCompletedError(e)) {
+        setInformationStatus('completed')
+        moveToStep(selectedCome.id, 'complete')
+        setInformationSubmitting(false)
+        return
+      }
+
       if (isExpiredTokenError(e)) {
         try {
           const refreshedTokens = await refreshToken(currentTokens.refreshToken)
           storeTokens(refreshedTokens)
           setTokens(refreshedTokens)
           currentTokens = refreshedTokens
-          await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
-          setInformationMessage('정보 입력이 완료되었습니다.')
+          if (step === 'edit') {
+            await updateInformation(selectedCome.id, currentTokens.accessToken, payload)
+          } else {
+            await submitInformation(selectedCome.id, currentTokens.accessToken, payload)
+          }
+          setInformationStatus('completed')
+          moveToStep(selectedCome.id, 'complete')
           return
         } catch (refreshError) {
+          if (step !== 'edit' && isAlreadyCompletedError(refreshError)) {
+            setInformationStatus('completed')
+            moveToStep(selectedCome.id, 'complete')
+            return
+          }
+
           clearTokens()
           setTokens(null)
           setMember(null)
@@ -745,7 +1000,7 @@ export default function App() {
     } finally {
       setInformationSubmitting(false)
     }
-  }, [fields, informationValues, selectedCome, tokens])
+  }, [fields, informationValues, moveToStep, selectedCome, step, tokens])
 
   const applySelectedCome = useCallback(async () => {
     if (!selectedCome) {
@@ -790,14 +1045,14 @@ export default function App() {
       await load()
 
       if (applied) {
-        setApplyMessage('신청 완료가 확인되었습니다.')
+        moveToStep(comeId, 'information')
       } else if (requestError) {
         setApplyMessage('신청 요청 후 완료 여부를 확인하지 못했습니다.')
       }
     } finally {
       setApplyLoading(false)
     }
-  }, [checkApplyStatus, load, loadDetail, selectedCome, startAuth, tokens])
+  }, [checkApplyStatus, load, loadDetail, moveToStep, selectedCome, startAuth, tokens])
 
   const loadMe = useCallback(async (currentTokens: TokenResponse) => {
     try {
@@ -889,7 +1144,11 @@ export default function App() {
     <div className="home">
       <header className="home__header">
         <div>
-          <h1 className="home__title">선착순</h1>
+          <h1 className="home__title">
+            <button type="button" className="home__title-button" onClick={closeDetail}>
+              선착순
+            </button>
+          </h1>
           <p className="home__lead">
             {items ? `신청 가능한 이벤트 ${items.length}개` : '이벤트를 불러오는 중입니다'}
           </p>
@@ -961,24 +1220,48 @@ export default function App() {
               </div>
             )}
             {selectedCome && (
-              <ComeDetail
-                item={selectedCome}
-                isLoggedIn={tokens !== null}
-                applyStatus={applyStatus}
-                applyStatusMessage={applyStatusMessage}
-                applyLoading={applyLoading}
-                applyMessage={applyMessage}
-                fields={fields}
-                informationValues={informationValues}
-                informationLoading={informationLoading}
-                informationSubmitting={informationSubmitting}
-                informationMessage={informationMessage}
-                onInformationChange={updateInformationValue}
-                onSubmitInformation={submitSelectedInformation}
-                onApply={() => void applySelectedCome()}
-                onBack={closeDetail}
-                onRefresh={() => void loadDetail(selectedCome.id)}
-              />
+              <>
+                {(step === 'information' || step === 'edit') && applyStatus !== 'applied' && (
+                  <div className="home__banner" role="status">
+                    신청 완료 여부를 확인하는 중입니다.
+                  </div>
+                )}
+                {(step === 'information' || step === 'edit') && applyStatus === 'applied' ? (
+                  <InformationStep
+                    item={selectedCome}
+                    mode={step === 'edit' ? 'edit' : 'create'}
+                    fields={fields}
+                    informationValues={informationValues}
+                    informationLoading={informationLoading}
+                    informationSubmitting={informationSubmitting}
+                    informationMessage={informationMessage}
+                    onInformationChange={updateInformationValue}
+                    onSubmitInformation={submitSelectedInformation}
+                    onBack={() => moveToStep(selectedCome.id, 'detail')}
+                  />
+                ) : step === 'complete' ? (
+                  <CompleteStep
+                    item={selectedCome}
+                    onHome={closeDetail}
+                    onDetail={() => moveToStep(selectedCome.id, 'detail')}
+                    onEdit={() => moveToStep(selectedCome.id, 'edit')}
+                  />
+                ) : (
+                  <ComeDetail
+                    item={selectedCome}
+                    isLoggedIn={tokens !== null}
+                    applyStatus={applyStatus}
+                    informationStatus={informationStatus}
+                    applyStatusMessage={applyStatusMessage}
+                    applyLoading={applyLoading}
+                    applyMessage={applyMessage}
+                    onApply={() => void applySelectedCome()}
+                    onStartInformation={() => moveToStep(selectedCome.id, 'information')}
+                    onBack={closeDetail}
+                    onRefresh={() => void loadDetail(selectedCome.id)}
+                  />
+                )}
+              </>
             )}
           </>
         ) : (

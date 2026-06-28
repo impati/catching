@@ -11,11 +11,8 @@ class AppliedEventQuery(
     val appliedEventRepository: AppliedEventRepository
 ) {
 
-    fun getAppliedEvent(firstCome: FirstCome, member: Member): AppliedEvent {
-        val appliedEvent = findAppliedEvent(firstCome, member)
-            ?: throw IllegalArgumentException("Applied event not found for first come: $firstCome and member: $member")
-
-        return appliedEvent
+    fun notExist(firstCome: FirstCome, member: Member): Boolean {
+        return findAppliedEvent(firstCome, member) == null;
     }
 
     fun findAppliedEvent(firstCome: FirstCome, member: Member): AppliedEvent? {

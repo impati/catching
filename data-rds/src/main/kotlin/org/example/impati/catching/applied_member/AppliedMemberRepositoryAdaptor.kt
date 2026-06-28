@@ -11,21 +11,35 @@ class AppliedMemberRepositoryAdaptor(
 ) : AppliedMemberRepository {
 
     override fun save(appliedMember: AppliedMember): AppliedMember {
+        return appliedMemberEntityRepository.save(AppliedMemberEntity.from(appliedMember)).toDomain()
+    }
+
+    override fun update(appliedMember: AppliedMember): AppliedMember {
         val entity = appliedMemberEntityRepository.findByFirstComeIdAndMemberId(
             firstComeId = appliedMember.comeId,
             memberId = appliedMember.memberId,
-        )?.update(appliedMember) ?: AppliedMemberEntity.from(appliedMember)
+        )?.update(appliedMember) ?: throw NotFoundAppliedMemberException()
 
         return appliedMemberEntityRepository.save(entity).toDomain()
+    }
+
+    override fun exists(
+        member: Member,
+        firstCome: FirstCome,
+    ): Boolean {
+        return appliedMemberEntityRepository.existsByFirstComeIdAndMemberId(
+            firstComeId = firstCome.id,
+            memberId = member.id,
+        )
     }
 
     override fun findBy(
         member: Member,
         firstCome: FirstCome,
-    ): AppliedMember {
+    ): AppliedMember? {
         return appliedMemberEntityRepository.findByFirstComeIdAndMemberId(
             firstComeId = firstCome.id,
             memberId = member.id,
-        )?.toDomain() ?: throw NotFoundAppliedMemberException()
+        )?.toDomain()
     }
 }
