@@ -11,4 +11,6 @@ interface TermsRepository {
     fun findTermsAll(): List<Terms>
 
     fun findBy(termsId: String): Terms
+
+    fun findByIds(termsIds: List<String>): List<Terms>
 }

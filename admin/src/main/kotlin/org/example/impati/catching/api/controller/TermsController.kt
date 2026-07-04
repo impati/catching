@@ -41,4 +41,9 @@ class TermsController(
     ): TermsGroupResponse {
         return TermsGroupResponse.from(termsCommand.updateTermsGroup(termsGroupType, request.termsIds))
     }
+
+    @GetMapping("/v1/terms-groups/{termsGroupType}")
+    fun getTermsGroup(@PathVariable termsGroupType: TermsGroupType): TermsGroupResponse {
+        return TermsGroupResponse.from(termsQuery.getTermsGroup(termsGroupType));
+    }
 }

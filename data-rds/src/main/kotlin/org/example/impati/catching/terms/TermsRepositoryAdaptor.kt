@@ -36,6 +36,10 @@ class TermsRepositoryAdaptor(
         return findTermsEntity(termsId).toDomain()
     }
 
+    override fun findByIds(termsIds: List<String>): List<Terms> {
+        return termsEntityRepository.findAllById(termsIds).map { it.toDomain() }
+    }
+
     private fun findTermsEntity(termsId: String): TermsEntity {
         return termsEntityRepository.findById(termsId)
             .orElseThrow { NotFoundTermsException("Terms $termsId not found") }

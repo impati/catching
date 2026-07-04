@@ -14,4 +14,8 @@ class TermsGroup(
             )
         }
     }
+
+    fun contain(termsId: String): Boolean {
+        return values.map { it.id }.contains(termsId)
+    }
 }

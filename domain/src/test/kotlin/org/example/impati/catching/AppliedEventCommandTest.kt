@@ -1,8 +1,8 @@
 package org.example.impati.catching
 
 import org.assertj.core.api.Assertions
-import org.example.impati.catching.auth.Member
 import org.example.impati.catching.applied_event.exception.ApplyFailException
+import org.example.impati.catching.auth.Member
 import org.example.impati.catching.first_come.FirstComeTime
 import org.example.impati.fixture.firstCome
 import org.junit.jupiter.api.BeforeEach

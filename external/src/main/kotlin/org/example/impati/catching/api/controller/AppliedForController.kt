@@ -1,13 +1,13 @@
 package org.example.impati.catching.api.controller
 
 import org.example.impati.catching.*
+import org.example.impati.catching.api.request.AgreementRequests
 import org.example.impati.catching.api.request.InformationsRequest
-import org.example.impati.catching.api.response.AppliedEventResponse
-import org.example.impati.catching.api.response.AppliedMemberResponse
-import org.example.impati.catching.api.response.FieldResponse
+import org.example.impati.catching.api.response.*
 import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
 import org.example.impati.catching.applied_member.exception.NotFoundAppliedMemberException
 import org.example.impati.catching.field.Information
+import org.example.impati.catching.terms.TermsGroupType
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -21,7 +21,10 @@ class AppliedForController(
     private val appliedMemberQuery: AppliedMemberQuery,
     private val appliedEventQuery: AppliedEventQuery,
     private val firstComeQuery: FirstComeQuery,
-    private val memberQuery: MemberQuery
+    private val memberQuery: MemberQuery,
+    private val termsQuery: TermsQuery,
+    private val memberAgreementCommand: MemberAgreementCommand,
+    private val memberAgreementQuery: MemberAgreementQuery,
 ) {
 
     /**
@@ -38,6 +41,54 @@ class AppliedForController(
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Applied event not found")
 
         return AppliedEventResponse.from(appliedEvent);
+    }
+
+    /**
+     * 선착순 신청 - 0단계, 신청 약관 노출
+     */
+    @GetMapping("/v1/terms-groups/APPLY_FOR")
+    fun displayApplyForTerms(): TermsGroupResponse {
+        return TermsGroupResponse.from(termsQuery.getTermsGroup(TermsGroupType.APPLY_FOR));
+    }
+
+    /**
+     * 선착순 신청 - 0단계, 약관 동의 상태
+     */
+    @GetMapping("/v1/terms-groups/APPLY_FOR/agreement")
+    fun agreementStatus(
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String
+    ): TermsAgreementResponses {
+        val member = memberQuery.getMember(authorization)
+        val termsGroup = termsQuery.getTermsGroup(TermsGroupType.APPLY_FOR)
+        val memberAgreementByTerms = memberAgreementQuery.getMemberAgreementBy(member, termsGroup)
+
+        return TermsAgreementResponses.from(memberAgreementByTerms)
+    }
+
+    /**
+     * 선착순 신청 - 0단계, 약관 동의
+     */
+    @PostMapping("/v1/terms-groups/APPLY_FOR/agreement")
+    fun agreement(
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+        @RequestBody request: AgreementRequests
+    ): TermsAgreementResponses {
+        val member = memberQuery.getMember(authorization)
+        val termsGroup = termsQuery.getTermsGroup(TermsGroupType.APPLY_FOR)
+        request.agreements.forEach {
+            if (!termsGroup.contain(it.termsId)) {
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "matched fail terms")
+            }
+        }
+
+        val agree = termsQuery.getTerms(request.agreements.filter { it.agree }.map { it.termsId }.toList())
+        memberAgreementCommand.agree(member, agree)
+
+        val disagree = termsQuery.getTerms(request.agreements.filter { !it.agree }.map { it.termsId }.toList())
+        memberAgreementCommand.disagree(member, disagree)
+
+        val memberAgreementBy = memberAgreementQuery.getMemberAgreementBy(member, termsGroup)
+        return TermsAgreementResponses.from(memberAgreementBy)
     }
 
     /**

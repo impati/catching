@@ -18,4 +18,8 @@ class TermsQuery(
     fun getTermsGroup(type: TermsGroupType): TermsGroup {
         return termsRepository.getTermsGroup(type)
     }
+
+    fun getTerms(termsIds: List<String>): List<Terms> {
+        return termsRepository.findByIds(termsIds)
+    }
 }
