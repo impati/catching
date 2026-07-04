@@ -80,6 +80,13 @@ CREATE TABLE applied_member_information
     PRIMARY KEY (id)
 );
 
+CREATE TABLE member_agreement
+(
+    member_id  VARCHAR(255) NOT NULL,
+    agreements TEXT         NOT NULL,
+    PRIMARY KEY (member_id)
+);
+
 CREATE TABLE terms
 (
     id      VARCHAR(255) NOT NULL,

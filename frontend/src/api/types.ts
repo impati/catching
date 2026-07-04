@@ -76,6 +76,37 @@ export interface AppliedMemberResponse {
   informations: InformationRequest[]
 }
 
+export type TermsGroupType = 'SIGNUP' | 'APPLY_FOR'
+
+export interface TermsResponse {
+  id: string
+  title: string
+  content: string
+}
+
+export interface TermsGroupResponse {
+  termsGroupType: TermsGroupType
+  terms: TermsResponse[]
+}
+
+export interface TermsAgreementResponse {
+  termsId: string
+  agree: boolean
+}
+
+export interface TermsAgreementResponses {
+  termsAgreements: TermsAgreementResponse[]
+}
+
+export interface AgreementRequest {
+  termsId: string
+  agree: boolean
+}
+
+export interface AgreementRequests {
+  agreements: AgreementRequest[]
+}
+
 export type AuthMode = 'login' | 'signup'
 
 export interface AuthUrlResponse {

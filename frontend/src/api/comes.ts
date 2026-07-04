@@ -2,10 +2,13 @@ import { ApiError } from './auth'
 import type {
   AppliedEventResponse,
   AppliedMemberResponse,
+  AgreementRequests,
   ErrorResponse,
   FieldResponse,
   FirstComeResponse,
   InformationsRequest,
+  TermsAgreementResponses,
+  TermsGroupResponse,
 } from './types'
 
 async function readError(res: Response, fallbackMessage: string): Promise<ApiError> {
@@ -58,6 +61,46 @@ export async function fetchApplyFor(
     throw await readError(res, `신청 결과 요청 실패 (${res.status})`)
   }
   return res.json() as Promise<AppliedEventResponse>
+}
+
+export async function fetchApplyTerms(): Promise<TermsGroupResponse> {
+  const res = await fetch('/v1/terms-groups/APPLY_FOR')
+  if (!res.ok) {
+    throw await readError(res, `약관 요청 실패 (${res.status})`)
+  }
+  return res.json() as Promise<TermsGroupResponse>
+}
+
+export async function fetchApplyTermsAgreement(
+  accessToken: string,
+): Promise<TermsAgreementResponses> {
+  const res = await fetch('/v1/terms-groups/APPLY_FOR/agreement', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  if (!res.ok) {
+    throw await readError(res, `약관 동의 상태 요청 실패 (${res.status})`)
+  }
+  return res.json() as Promise<TermsAgreementResponses>
+}
+
+export async function submitApplyTermsAgreement(
+  accessToken: string,
+  payload: AgreementRequests,
+): Promise<TermsAgreementResponses> {
+  const res = await fetch('/v1/terms-groups/APPLY_FOR/agreement', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw await readError(res, `약관 동의 실패 (${res.status})`)
+  }
+  return res.json() as Promise<TermsAgreementResponses>
 }
 
 export async function fetchFields(

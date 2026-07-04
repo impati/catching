@@ -13,10 +13,13 @@ import {
 import {
   applyForCome,
   fetchApplyFor,
+  fetchApplyTerms,
+  fetchApplyTermsAgreement,
   fetchComeDetail,
   fetchComes,
   fetchFields,
   fetchInformation,
+  submitApplyTermsAgreement,
   submitInformation,
   updateInformation,
 } from './api/comes'
@@ -26,6 +29,7 @@ import type {
   FirstComeResponse,
   InformationRequest,
   MemberResponse,
+  TermsGroupResponse,
   TokenResponse,
 } from './api/types'
 import './App.css'
@@ -35,7 +39,8 @@ const callbackTokenRequests = new Map<string, Promise<TokenResponse>>()
 type ApplyStatus = 'idle' | 'checking' | 'applied' | 'not_applied' | 'unknown'
 type InformationStatus = 'idle' | 'checking' | 'completed' | 'not_completed' | 'unknown'
 type InformationValues = Record<string, string[]>
-type PageStep = 'detail' | 'information' | 'complete' | 'edit'
+type TermsAgreementValues = Record<string, boolean>
+type PageStep = 'detail' | 'terms' | 'information' | 'complete' | 'edit'
 
 function readComeIdFromUrl() {
   return new URLSearchParams(window.location.search).get('comeId')
@@ -43,7 +48,7 @@ function readComeIdFromUrl() {
 
 function readStepFromUrl(): PageStep {
   const step = new URLSearchParams(window.location.search).get('step')
-  if (step === 'information' || step === 'complete' || step === 'edit') {
+  if (step === 'terms' || step === 'information' || step === 'complete' || step === 'edit') {
     return step
   }
   return 'detail'
@@ -133,6 +138,20 @@ function getRequiredMissingField(fields: FieldResponse[], values: InformationVal
     }
     return (values[field.name] ?? []).every((value) => value.trim() === '')
   })
+}
+
+function createTermsAgreementValues(
+  termsGroup: TermsGroupResponse,
+  agreements: TermsAgreementValues = {},
+): TermsAgreementValues {
+  return termsGroup.terms.reduce<TermsAgreementValues>((acc, terms) => {
+    acc[terms.id] = agreements[terms.id] ?? false
+    return acc
+  }, {})
+}
+
+function areAllTermsAgreed(termsGroup: TermsGroupResponse | null, agreements: TermsAgreementValues) {
+  return termsGroup !== null && termsGroup.terms.length > 0 && termsGroup.terms.every((terms) => agreements[terms.id])
 }
 
 function ComeCard({
@@ -364,6 +383,111 @@ function ComeDetail({
   )
 }
 
+function TermsStep({
+  item,
+  termsGroup,
+  agreements,
+  termsLoading,
+  termsSubmitting,
+  termsMessage,
+  onAgreementChange,
+  onSubmitTerms,
+  onBack,
+}: {
+  item: FirstComeResponse
+  termsGroup: TermsGroupResponse | null
+  agreements: TermsAgreementValues
+  termsLoading: boolean
+  termsSubmitting: boolean
+  termsMessage: string | null
+  onAgreementChange: (termsId: string, agree: boolean) => void
+  onSubmitTerms: () => void
+  onBack: () => void
+}) {
+  const allAgreed = areAllTermsAgreed(termsGroup, agreements)
+
+  return (
+    <article className="come-detail come-flow">
+      <div className="come-detail__nav">
+        <button type="button" className="home__button" onClick={onBack}>
+          상세
+        </button>
+      </div>
+
+      <header className="come-flow__head">
+        <span className="come-status come-status--active">신청 전 확인</span>
+        <h2 className="come-detail__title">{item.name}</h2>
+        <p className="come-detail__sub">{item.organizer}</p>
+      </header>
+
+      <section className="come-detail__terms">
+        <div className="come-detail__section-head">
+          <h3>약관 확인</h3>
+          <span>신청 0단계</span>
+        </div>
+
+        {termsLoading ? (
+          <p className="come-detail__notice">약관을 불러오는 중입니다.</p>
+        ) : termsGroup === null ? (
+          <p className="come-detail__notice">
+            {termsMessage ?? '약관을 불러오지 못했습니다.'}
+          </p>
+        ) : termsGroup.terms.length === 0 ? (
+          <div className="come-flow__empty">
+            <p className="come-detail__notice">확인할 약관이 없습니다.</p>
+            <button
+              type="button"
+              className="home__button home__button--primary"
+              onClick={onSubmitTerms}
+              disabled={termsSubmitting}
+            >
+              {termsSubmitting ? '신청 중...' : '신청하기'}
+            </button>
+          </div>
+        ) : (
+          <form
+            className="terms-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              onSubmitTerms()
+            }}
+          >
+            <div className="terms-list">
+              {termsGroup.terms.map((terms) => (
+                <label className="terms-item" key={terms.id}>
+                  <input
+                    type="checkbox"
+                    checked={agreements[terms.id] ?? false}
+                    onChange={(e) => onAgreementChange(terms.id, e.target.checked)}
+                  />
+                  <span className="terms-item__body">
+                    <strong>{terms.title}</strong>
+                    <span>{terms.content}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="come-form__actions">
+              <button
+                type="submit"
+                className="home__button home__button--primary"
+                disabled={termsSubmitting || !allAgreed}
+              >
+                {termsSubmitting ? '동의 저장 중...' : '동의하고 신청하기'}
+              </button>
+              {termsMessage && (
+                <p className="come-detail__notice" role="status">
+                  {termsMessage}
+                </p>
+              )}
+            </div>
+          </form>
+        )}
+      </section>
+    </article>
+  )
+}
+
 function InformationStep({
   item,
   mode,
@@ -563,6 +687,11 @@ export default function App() {
   const [applyStatusMessage, setApplyStatusMessage] = useState<string | null>(null)
   const [applyLoading, setApplyLoading] = useState(false)
   const [applyMessage, setApplyMessage] = useState<string | null>(null)
+  const [termsGroup, setTermsGroup] = useState<TermsGroupResponse | null>(null)
+  const [termsAgreements, setTermsAgreements] = useState<TermsAgreementValues>({})
+  const [termsLoading, setTermsLoading] = useState(false)
+  const [termsSubmitting, setTermsSubmitting] = useState(false)
+  const [termsMessage, setTermsMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState<AuthMode | 'callback' | null>(null)
@@ -626,6 +755,9 @@ export default function App() {
     setInformationStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
+    setTermsGroup(null)
+    setTermsAgreements({})
+    setTermsMessage(null)
     setFields(null)
     setInformationValues({})
     setInformationMessage(null)
@@ -643,6 +775,9 @@ export default function App() {
     setInformationStatus('idle')
     setApplyStatusMessage(null)
     setApplyMessage(null)
+    setTermsGroup(null)
+    setTermsAgreements({})
+    setTermsMessage(null)
     setFields(null)
     setInformationValues({})
     setInformationMessage(null)
@@ -693,6 +828,9 @@ export default function App() {
     setApplyStatus('idle')
     setInformationStatus('idle')
     setApplyStatusMessage(null)
+    setTermsGroup(null)
+    setTermsAgreements({})
+    setTermsMessage(null)
     setFields(null)
     setInformationValues({})
     setInformationMessage(null)
@@ -748,6 +886,63 @@ export default function App() {
     [],
   )
 
+  const loadTerms = useCallback(async (currentTokens: TokenResponse) => {
+    setTermsLoading(true)
+    setTermsMessage(null)
+
+    async function loadWith(accessToken: string) {
+      const [nextTermsGroup, agreementStatus] = await Promise.all([
+        fetchApplyTerms(),
+        fetchApplyTermsAgreement(accessToken),
+      ])
+      const agreementMap = agreementStatus.termsAgreements.reduce<TermsAgreementValues>((acc, agreement) => {
+        acc[agreement.termsId] = agreement.agree
+        return acc
+      }, {})
+
+      setTermsGroup(nextTermsGroup)
+      setTermsAgreements(createTermsAgreementValues(nextTermsGroup, agreementMap))
+    }
+
+    try {
+      await loadWith(currentTokens.accessToken)
+    } catch (e) {
+      if (isExpiredTokenError(e)) {
+        try {
+          const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+          storeTokens(refreshedTokens)
+          setTokens(refreshedTokens)
+          await loadWith(refreshedTokens.accessToken)
+          return
+        } catch (refreshError) {
+          clearTokens()
+          setTokens(null)
+          setMember(null)
+          setTermsGroup(null)
+          setTermsAgreements({})
+          setTermsMessage(
+            refreshError instanceof Error ? refreshError.message : '약관을 불러오지 못했습니다.',
+          )
+          return
+        }
+      }
+
+      setTermsGroup(null)
+      setTermsAgreements({})
+      setTermsMessage(e instanceof Error ? e.message : '약관을 불러오지 못했습니다.')
+    } finally {
+      setTermsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (step !== 'terms' || !tokens) {
+      return
+    }
+
+    void loadTerms(tokens)
+  }, [loadTerms, step, tokens])
+
   useEffect(() => {
     if (!selectedComeId) {
       return
@@ -757,6 +952,9 @@ export default function App() {
       setApplyStatus('idle')
       setInformationStatus('idle')
       setApplyStatusMessage(null)
+      setTermsGroup(null)
+      setTermsAgreements({})
+      setTermsMessage(null)
       setFields(null)
       setInformationValues({})
       setInformationMessage(null)
@@ -930,6 +1128,14 @@ export default function App() {
     }))
   }, [])
 
+  const updateTermsAgreement = useCallback((termsId: string, agree: boolean) => {
+    setTermsAgreements((current) => ({
+      ...current,
+      [termsId]: agree,
+    }))
+    setTermsMessage(null)
+  }, [])
+
   const submitSelectedInformation = useCallback(async () => {
     if (!selectedCome || !tokens || !fields) {
       return
@@ -1002,6 +1208,21 @@ export default function App() {
     }
   }, [fields, informationValues, moveToStep, selectedCome, step, tokens])
 
+  const beginApplyFlow = useCallback(async () => {
+    if (!selectedCome) {
+      return
+    }
+
+    if (!tokens) {
+      await startAuth('login')
+      return
+    }
+
+    setApplyMessage(null)
+    setTermsMessage(null)
+    moveToStep(selectedCome.id, 'terms')
+  }, [moveToStep, selectedCome, startAuth, tokens])
+
   const applySelectedCome = useCallback(async () => {
     if (!selectedCome) {
       return
@@ -1053,6 +1274,70 @@ export default function App() {
       setApplyLoading(false)
     }
   }, [checkApplyStatus, load, loadDetail, moveToStep, selectedCome, startAuth, tokens])
+
+  const submitSelectedTerms = useCallback(async () => {
+    if (!selectedCome || !tokens || !termsGroup) {
+      return
+    }
+
+    if (termsGroup.terms.length > 0 && !areAllTermsAgreed(termsGroup, termsAgreements)) {
+      setTermsMessage('모든 약관에 동의해야 신청할 수 있습니다.')
+      return
+    }
+
+    setTermsSubmitting(true)
+    setTermsMessage(null)
+
+    let currentTokens = tokens
+    const payload = {
+      agreements: termsGroup.terms.map((terms) => ({
+        termsId: terms.id,
+        agree: termsAgreements[terms.id] ?? false,
+      })),
+    }
+
+    try {
+      const result = await submitApplyTermsAgreement(currentTokens.accessToken, payload)
+      setTermsAgreements(
+        result.termsAgreements.reduce<TermsAgreementValues>((acc, agreement) => {
+          acc[agreement.termsId] = agreement.agree
+          return acc
+        }, {}),
+      )
+    } catch (e) {
+      if (isExpiredTokenError(e)) {
+        try {
+          const refreshedTokens = await refreshToken(currentTokens.refreshToken)
+          storeTokens(refreshedTokens)
+          setTokens(refreshedTokens)
+          currentTokens = refreshedTokens
+          const result = await submitApplyTermsAgreement(currentTokens.accessToken, payload)
+          setTermsAgreements(
+            result.termsAgreements.reduce<TermsAgreementValues>((acc, agreement) => {
+              acc[agreement.termsId] = agreement.agree
+              return acc
+            }, {}),
+          )
+        } catch (refreshError) {
+          clearTokens()
+          setTokens(null)
+          setMember(null)
+          setTermsMessage(
+            refreshError instanceof Error ? refreshError.message : '약관 동의에 실패했습니다.',
+          )
+          setTermsSubmitting(false)
+          return
+        }
+      } else {
+        setTermsMessage(e instanceof Error ? e.message : '약관 동의에 실패했습니다.')
+        setTermsSubmitting(false)
+        return
+      }
+    }
+
+    setTermsSubmitting(false)
+    await applySelectedCome()
+  }, [applySelectedCome, selectedCome, termsAgreements, termsGroup, tokens])
 
   const loadMe = useCallback(async (currentTokens: TokenResponse) => {
     try {
@@ -1226,7 +1511,19 @@ export default function App() {
                     신청 완료 여부를 확인하는 중입니다.
                   </div>
                 )}
-                {(step === 'information' || step === 'edit') && applyStatus === 'applied' ? (
+                {step === 'terms' ? (
+                  <TermsStep
+                    item={selectedCome}
+                    termsGroup={termsGroup}
+                    agreements={termsAgreements}
+                    termsLoading={termsLoading}
+                    termsSubmitting={termsSubmitting || applyLoading}
+                    termsMessage={termsMessage}
+                    onAgreementChange={updateTermsAgreement}
+                    onSubmitTerms={submitSelectedTerms}
+                    onBack={() => moveToStep(selectedCome.id, 'detail')}
+                  />
+                ) : (step === 'information' || step === 'edit') && applyStatus === 'applied' ? (
                   <InformationStep
                     item={selectedCome}
                     mode={step === 'edit' ? 'edit' : 'create'}
@@ -1255,7 +1552,7 @@ export default function App() {
                     applyStatusMessage={applyStatusMessage}
                     applyLoading={applyLoading}
                     applyMessage={applyMessage}
-                    onApply={() => void applySelectedCome()}
+                    onApply={() => void beginApplyFlow()}
                     onStartInformation={() => moveToStep(selectedCome.id, 'information')}
                     onBack={closeDetail}
                     onRefresh={() => void loadDetail(selectedCome.id)}
