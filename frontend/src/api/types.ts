@@ -82,6 +82,7 @@ export interface TermsResponse {
   id: string
   title: string
   content: string
+  required: boolean
 }
 
 export interface TermsGroupResponse {
@@ -124,7 +125,7 @@ export interface MemberResponse {
   nickName: string
 }
 
-export type ErrorCode = 'EXPIRED_TOKEN'
+export type ErrorCode = 'EXPIRED_TOKEN' | 'UNSUPPORTED_FIELD' | 'NOT_FOUND' | 'REQUIRED_AGREEMENT'
 
 export interface ErrorResponse {
   message: string

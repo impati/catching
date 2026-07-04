@@ -1,9 +1,6 @@
 package org.example.impati.catching
 
-import org.example.impati.catching.terms.Terms
-import org.example.impati.catching.terms.TermsGroup
-import org.example.impati.catching.terms.TermsGroupType
-import org.example.impati.catching.terms.TermsRepository
+import org.example.impati.catching.terms.*
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,8 +12,11 @@ class TermsCommand(
         return termsRepository.save(Terms.create(title, content))
     }
 
-    fun updateTermsGroup(type: TermsGroupType, termsIds: List<String>): TermsGroup {
-        val terms = termsIds.map { termsRepository.findBy(it) }
-        return termsRepository.save(TermsGroup.create(type, terms))
+    fun createTermsGroup(type: TermsGroupType, termsWithRequired: Map<String, Boolean>): TermsGroup {
+        val termsInGroup = termsWithRequired.entries.map {
+            TermsInGroup(termsRepository.findBy(it.key), it.value)
+        }
+
+        return termsRepository.save(TermsGroup.create(type, termsInGroup))
     }
 }

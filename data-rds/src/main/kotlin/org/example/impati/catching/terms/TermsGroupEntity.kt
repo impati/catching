@@ -1,12 +1,6 @@
 package org.example.impati.catching.terms
 
-import jakarta.persistence.Column
-import jakarta.persistence.Convert
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import org.example.impati.catching.field.StringListConverter
 
 @Entity
@@ -18,9 +12,9 @@ class TermsGroupEntity(
     @Column(name = "type", nullable = false, updatable = false)
     val type: TermsGroupType,
 
-    @Convert(converter = StringListConverter::class)
-    @Column(name = "terms_ids", nullable = false, columnDefinition = "TEXT")
-    val termsIds: List<String> = emptyList(),
+    @Convert(converter = TermsInGroupVoConverter::class)
+    @Column(name = "terms", nullable = false, columnDefinition = "TEXT")
+    val terms: List<TermsInGroupVo> = emptyList(),
 ) {
 
     companion object {
@@ -28,7 +22,7 @@ class TermsGroupEntity(
         fun from(termsGroup: TermsGroup): TermsGroupEntity {
             return TermsGroupEntity(
                 type = termsGroup.type,
-                termsIds = termsGroup.values.map { it.id },
+                terms = termsGroup.values.map { TermsInGroupVo(it.terms.id, it.required) },
             )
         }
     }
@@ -36,7 +30,12 @@ class TermsGroupEntity(
     fun toDomain(terms: List<Terms>): TermsGroup {
         return TermsGroup(
             type = type,
-            values = terms,
+            values = this.terms.map {
+                TermsInGroup(
+                    terms.find { th -> th.id == it.termsId }!!,
+                    it.required
+                )
+            }
         )
     }
 }

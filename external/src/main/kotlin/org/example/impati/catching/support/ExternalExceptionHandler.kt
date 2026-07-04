@@ -3,6 +3,7 @@ package org.example.impati.catching.support
 import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
 import org.example.impati.catching.applied_member.exception.NotFoundAppliedMemberException
 import org.example.impati.catching.auth.exception.ExpiredTokenException
+import org.example.impati.catching.member_agreement.exception.RequiredAgreementException
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -27,6 +28,15 @@ class ExternalExceptionHandler {
         return ErrorResponse(
             e.message ?: "not found",
             ErrorCode.NOT_FOUND
+        )
+    }
+
+    @ExceptionHandler(RequiredAgreementException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun requiredAgreementExceptionHandle(e: RequiredAgreementException): ErrorResponse {
+        return ErrorResponse(
+            e.message ?: "required agreement",
+            ErrorCode.REQUIRED_AGREEMENT
         )
     }
 }

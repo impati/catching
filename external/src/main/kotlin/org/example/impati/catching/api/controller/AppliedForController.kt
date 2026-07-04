@@ -6,7 +6,9 @@ import org.example.impati.catching.api.request.InformationsRequest
 import org.example.impati.catching.api.response.*
 import org.example.impati.catching.applied_event.exception.NotFoundAppliedEvent
 import org.example.impati.catching.applied_member.exception.NotFoundAppliedMemberException
+import org.example.impati.catching.executor.MemberAgreementExecutor
 import org.example.impati.catching.field.Information
+import org.example.impati.catching.member_agreement.Agreement
 import org.example.impati.catching.terms.TermsGroupType
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -23,7 +25,7 @@ class AppliedForController(
     private val firstComeQuery: FirstComeQuery,
     private val memberQuery: MemberQuery,
     private val termsQuery: TermsQuery,
-    private val memberAgreementCommand: MemberAgreementCommand,
+    private val memberAgreementExecutor: MemberAgreementExecutor,
     private val memberAgreementQuery: MemberAgreementQuery,
 ) {
 
@@ -73,22 +75,14 @@ class AppliedForController(
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
         @RequestBody request: AgreementRequests
     ): TermsAgreementResponses {
+        val agreements = request.agreements.map { Agreement(it.termsId, it.agree) }
+
         val member = memberQuery.getMember(authorization)
         val termsGroup = termsQuery.getTermsGroup(TermsGroupType.APPLY_FOR)
-        request.agreements.forEach {
-            if (!termsGroup.contain(it.termsId)) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "matched fail terms")
-            }
-        }
 
-        val agree = termsQuery.getTerms(request.agreements.filter { it.agree }.map { it.termsId }.toList())
-        memberAgreementCommand.agree(member, agree)
+        val memberAgreementByTerms = memberAgreementExecutor.agreeAndDisAgreeBy(member, agreements, termsGroup)
 
-        val disagree = termsQuery.getTerms(request.agreements.filter { !it.agree }.map { it.termsId }.toList())
-        memberAgreementCommand.disagree(member, disagree)
-
-        val memberAgreementBy = memberAgreementQuery.getMemberAgreementBy(member, termsGroup)
-        return TermsAgreementResponses.from(memberAgreementBy)
+        return TermsAgreementResponses.from(memberAgreementByTerms)
     }
 
     /**

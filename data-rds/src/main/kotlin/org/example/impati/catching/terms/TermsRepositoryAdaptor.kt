@@ -15,7 +15,7 @@ class TermsRepositoryAdaptor(
     }
 
     override fun save(termsGroup: TermsGroup): TermsGroup {
-        val terms = termsGroup.values.map { findTermsEntity(it.id) }
+        val terms = termsGroup.values.map { findTermsEntity(it.terms.id) }
         val savedTermsGroup = termsGroupEntityRepository.save(TermsGroupEntity.from(termsGroup))
 
         return savedTermsGroup.toDomain(terms.map { it.toDomain() })
@@ -25,7 +25,7 @@ class TermsRepositoryAdaptor(
         val termsGroup = termsGroupEntityRepository.findById(termsGroupType)
             .orElseThrow { NotFoundTermsGroupException("TermsGroup $termsGroupType not found") }
 
-        return termsGroup.toDomain(findTermsAllBy(termsGroup.termsIds))
+        return termsGroup.toDomain(findTermsAllBy(termsGroup.terms.map { it.termsId }))
     }
 
     override fun findTermsAll(): List<Terms> {

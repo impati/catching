@@ -2,12 +2,12 @@ package org.example.impati.catching.terms
 
 class TermsGroup(
     val type: TermsGroupType,
-    val values: List<Terms>
+    val values: List<TermsInGroup>
 ) {
 
     companion object {
 
-        fun create(type: TermsGroupType, termsList: List<Terms>): TermsGroup {
+        fun create(type: TermsGroupType, termsList: List<TermsInGroup>): TermsGroup {
             return TermsGroup(
                 type,
                 termsList
@@ -16,6 +16,6 @@ class TermsGroup(
     }
 
     fun contain(termsId: String): Boolean {
-        return values.map { it.id }.contains(termsId)
+        return values.map { it.terms.id }.contains(termsId)
     }
 }

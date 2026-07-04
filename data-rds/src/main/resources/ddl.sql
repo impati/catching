@@ -97,7 +97,7 @@ CREATE TABLE terms
 
 CREATE TABLE terms_group
 (
-    type      VARCHAR(255) NOT NULL,
-    terms_ids TEXT         NOT NULL,
+    type  VARCHAR(255) NOT NULL,
+    terms TEXT         NOT NULL,
     PRIMARY KEY (type)
 );

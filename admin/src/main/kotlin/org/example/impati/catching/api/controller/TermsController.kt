@@ -39,7 +39,12 @@ class TermsController(
         @PathVariable termsGroupType: TermsGroupType,
         @RequestBody request: TermsGroupRequest
     ): TermsGroupResponse {
-        return TermsGroupResponse.from(termsCommand.updateTermsGroup(termsGroupType, request.termsIds))
+        return TermsGroupResponse.from(
+            termsCommand.createTermsGroup(
+                termsGroupType,
+                request.terms.associate { it.termsId to it.required }
+            )
+        )
     }
 
     @GetMapping("/v1/terms-groups/{termsGroupType}")

@@ -13,6 +13,7 @@ include("client-member")
 
 // application
 include("admin")
+include("batch")
 include("external")
 
 // test-support

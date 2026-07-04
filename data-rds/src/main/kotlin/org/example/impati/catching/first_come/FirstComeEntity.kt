@@ -2,7 +2,7 @@ package org.example.impati.catching.first_come
 
 import jakarta.persistence.*
 import org.example.impati.catching.field.Field
-import org.example.impati.catching.field.StringListConverter
+import org.example.impati.catching.terms.TermsInGroupVoConverter
 import java.time.LocalDateTime
 
 @Entity
@@ -48,7 +48,7 @@ class FirstComeEntity(
     @Column(name = "wait_capacity")
     var waitCapacity: Int?,
 
-    @Convert(converter = StringListConverter::class)
+    @Convert(converter = TermsInGroupVoConverter::class)
     @Column(name = "fields", nullable = false, columnDefinition = "TEXT")
     var fields: List<String> = emptyList(),
 

@@ -23,8 +23,8 @@ class MemberAgreementQuery(
         val by = mutableMapOf<String, Boolean>();
 
         termsGroup.values.forEach {
-            val agreement = memberAgreement.get(it.id)
-            by[it.id] = agreement?.value ?: false
+            val agreement = memberAgreement.get(it.terms.id)
+            by[it.terms.id] = agreement?.value ?: false
         }
 
         return MemberAgreementByTerms(

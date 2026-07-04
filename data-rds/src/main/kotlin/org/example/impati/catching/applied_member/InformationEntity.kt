@@ -1,13 +1,9 @@
 package org.example.impati.catching.applied_member
 
-import jakarta.persistence.Column
-import jakarta.persistence.Convert
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import org.example.impati.catching.field.Information
-import org.example.impati.catching.field.StringListConverter
-import java.util.UUID
+import org.example.impati.catching.terms.TermsInGroupVoConverter
+import java.util.*
 
 @Entity
 @Table(name = "applied_member_information")
@@ -20,7 +16,7 @@ class InformationEntity(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @Convert(converter = StringListConverter::class)
+    @Convert(converter = TermsInGroupVoConverter::class)
     @Column(name = "information_values", nullable = false, columnDefinition = "TEXT")
     val values: List<String> = emptyList(),
 ) {

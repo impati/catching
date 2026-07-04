@@ -150,8 +150,13 @@ function createTermsAgreementValues(
   }, {})
 }
 
-function areAllTermsAgreed(termsGroup: TermsGroupResponse | null, agreements: TermsAgreementValues) {
-  return termsGroup !== null && termsGroup.terms.length > 0 && termsGroup.terms.every((terms) => agreements[terms.id])
+function areRequiredTermsAgreed(termsGroup: TermsGroupResponse | null, agreements: TermsAgreementValues) {
+  return termsGroup !== null && termsGroup.terms.length > 0 && termsGroup.terms.every((terms) => {
+    if (!terms.required) {
+      return true
+    }
+    return agreements[terms.id]
+  })
 }
 
 function ComeCard({
@@ -404,7 +409,7 @@ function TermsStep({
   onSubmitTerms: () => void
   onBack: () => void
 }) {
-  const allAgreed = areAllTermsAgreed(termsGroup, agreements)
+  const requiredAgreed = areRequiredTermsAgreed(termsGroup, agreements)
 
   return (
     <article className="come-detail come-flow">
@@ -461,7 +466,7 @@ function TermsStep({
                     onChange={(e) => onAgreementChange(terms.id, e.target.checked)}
                   />
                   <span className="terms-item__body">
-                    <strong>{terms.title}</strong>
+                    <strong>{terms.required ? `${terms.title} (필수)` : `${terms.title} (선택)`}</strong>
                     <span>{terms.content}</span>
                   </span>
                 </label>
@@ -471,7 +476,7 @@ function TermsStep({
               <button
                 type="submit"
                 className="home__button home__button--primary"
-                disabled={termsSubmitting || !allAgreed}
+                disabled={termsSubmitting || !requiredAgreed}
               >
                 {termsSubmitting ? '동의 저장 중...' : '동의하고 신청하기'}
               </button>
@@ -1280,8 +1285,8 @@ export default function App() {
       return
     }
 
-    if (termsGroup.terms.length > 0 && !areAllTermsAgreed(termsGroup, termsAgreements)) {
-      setTermsMessage('모든 약관에 동의해야 신청할 수 있습니다.')
+    if (termsGroup.terms.length > 0 && !areRequiredTermsAgreed(termsGroup, termsAgreements)) {
+      setTermsMessage('필수 약관에 동의해야 신청할 수 있습니다.')
       return
     }
 
