@@ -1,4 +1,4 @@
-import type { AuthMode, AuthUrlResponse, ErrorResponse, MemberResponse, TokenResponse } from './types'
+import type { AuthGatewayResponse, AuthMode, ErrorResponse, MemberResponse, TokenResponse } from './types'
 
 export const AUTH_TOKEN_STORAGE_KEY = 'catching.auth.tokens'
 
@@ -39,11 +39,11 @@ export async function fetchAuthUrl(mode: AuthMode): Promise<string> {
   if (!res.ok) {
     throw new Error(`로그인 URL 요청 실패 (${res.status})`)
   }
-  const data = (await res.json()) as AuthUrlResponse
+  const data = (await res.json()) as AuthGatewayResponse
   return data.authUrl
 }
 
-export async function exchangeCode(code: string, clientId: string): Promise<TokenResponse> {
+export async function exchangeCode(code: string, state: string): Promise<TokenResponse> {
   const res = await fetch('/v1/auth/code', {
     method: 'POST',
     headers: {
@@ -51,7 +51,7 @@ export async function exchangeCode(code: string, clientId: string): Promise<Toke
     },
     body: JSON.stringify({
       code,
-      clientId,
+      state,
     }),
   })
   if (!res.ok) {

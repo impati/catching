@@ -110,7 +110,7 @@ export interface AgreementRequests {
 
 export type AuthMode = 'login' | 'signup'
 
-export interface AuthUrlResponse {
+export interface AuthGatewayResponse {
   authUrl: string
 }
 
@@ -125,7 +125,12 @@ export interface MemberResponse {
   nickName: string
 }
 
-export type ErrorCode = 'EXPIRED_TOKEN' | 'UNSUPPORTED_FIELD' | 'NOT_FOUND' | 'REQUIRED_AGREEMENT'
+export type ErrorCode =
+  | 'EXPIRED_TOKEN'
+  | 'INVALID_AUTH_STATE'
+  | 'UNSUPPORTED_FIELD'
+  | 'NOT_FOUND'
+  | 'REQUIRED_AGREEMENT'
 
 export interface ErrorResponse {
   message: string

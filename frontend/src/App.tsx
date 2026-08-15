@@ -1384,9 +1384,9 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const code = params.get('code')
-    const clientId = params.get('clientId')
+    const state = params.get('state')
 
-    if (!code || !clientId) {
+    if (!code || !state) {
       return
     }
 
@@ -1397,10 +1397,10 @@ export default function App() {
       setAuthError(null)
 
       try {
-        const requestKey = `${clientId}:${code}`
+        const requestKey = `${state}:${code}`
         let tokenRequest = callbackTokenRequests.get(requestKey)
         if (!tokenRequest) {
-          tokenRequest = exchangeCode(code as string, clientId as string)
+          tokenRequest = exchangeCode(code as string, state as string)
           callbackTokenRequests.set(requestKey, tokenRequest)
         }
 

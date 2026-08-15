@@ -1,6 +1,5 @@
 package org.example.impati.catching
 
-import org.example.impati.catching.auth.AuthMode
 import org.example.impati.catching.auth.Member
 import org.example.impati.catching.auth.MemberClient
 import org.example.impati.catching.auth.Token
@@ -13,7 +12,6 @@ import org.springframework.web.client.RestClient
 @Component
 class MemberAuthClient(
     private val properties: AuthClientProperties,
-    private val authUrlFactory: AuthUrlFactory,
     restClientBuilder: RestClient.Builder,
 ) : MemberClient {
 
@@ -21,11 +19,7 @@ class MemberAuthClient(
         .baseUrl(properties.memberApiBaseUrl)
         .build()
 
-    override fun gateway(authMode: AuthMode): String {
-        return authUrlFactory.create(authMode)
-    }
-
-    override fun exchangeCode(
+    fun exchangeCode(
         code: String,
         clientId: String
     ): Token {
@@ -44,7 +38,7 @@ class MemberAuthClient(
             ?: throw IllegalStateException("회원 서버의 토큰 교환 응답이 비어 있습니다.")
     }
 
-    override fun refresh(refreshToken: String): Token {
+    fun refresh(refreshToken: String): Token {
         return restClient.post()
             .uri("/api/v1/auth/token/refresh")
             .body(RefreshTokenClientRequest(token = refreshToken))
