@@ -7,5 +7,6 @@ data class AuthClientProperties(
     val memberApiBaseUrl: String = "http://localhost:8081",
     val memberWebBaseUrl: String = "http://localhost:3000/index.html",
     val clientId: String = "catch",
+    val clientSecret: String = "secret",
     val webRedirectUrl: String = "http://localhost:5173/",
 )

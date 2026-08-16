@@ -28,6 +28,7 @@ class MemberAuthClient(
             .body(
                 ExchangeAuthorizationCodeRequest(
                     clientId = clientId,
+                    clientSecret = properties.clientSecret,
                     redirectUrl = properties.webRedirectUrl,
                     code = code,
                 )
@@ -79,6 +80,7 @@ class MemberAuthClient(
 
 private data class ExchangeAuthorizationCodeRequest(
     val clientId: String,
+    val clientSecret: String,
     val redirectUrl: String,
     val code: String,
 )
